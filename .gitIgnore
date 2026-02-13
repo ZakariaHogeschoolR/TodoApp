@@ -1,0 +1,27 @@
+# Build Folders
+bin/
+obj/
+
+# Rider / VS Code / Visual Studio settings
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.sln.user
+
+# Packages
+*.nupkg
+*.snupkg
+packages/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional: for ReSharper
+_ReSharper*/
+*.DotSettings.user
