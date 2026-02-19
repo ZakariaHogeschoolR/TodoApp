@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.Security.Cryptography.X509Certificates;
 using Model;
@@ -27,6 +28,13 @@ public class TaskService: ITaskService
             Status = statusProgression.ToDo
         };
         _tasks.Add(newTask);
+        _repository.SaveTasks(_tasks.ToArray());
+    }
+
+    public void UpdateTask(string description, int id)
+    {
+        var task = _tasks.FindBy(id, (t, id) => t.Id == id);
+        _tasks.Update(description, task);
         _repository.SaveTasks(_tasks.ToArray());
     }
 
@@ -77,6 +85,25 @@ public class TaskService: ITaskService
             {
                 _tasks.ToArray()[i].Status = (statusProgression)status;
             }
+        }
+        _repository.SaveTasks(_tasks.ToArray());
+    }
+
+    public IMyCollection<TaskItem> FilterByStatus(statusProgression status)
+    {
+        TaskArray filtered = (TaskArray)_tasks.Filter(t => t.Status == status);
+        return  new TaskArray(filtered.ToArray());
+    } 
+
+    public void List(IMyCollection<TaskItem> collection, statusProgression status )
+    {
+        Console.Clear();
+        Console.WriteLine("=============      ToDo List      =============");
+        Console.WriteLine("|---------------------------------------------|");
+        Console.WriteLine($"|  {status}  |");
+        foreach(TaskItem item in collection)
+        {
+            Console.WriteLine($"| {item.Description}: {item.Status} |");
         }
     }
 }

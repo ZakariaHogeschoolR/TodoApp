@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Security.Authentication.ExtendedProtection;
+using System.Threading.Channels;
 using Model;
 
 public class ConsoleTaskView: ITaskView
@@ -13,7 +14,6 @@ public class ConsoleTaskView: ITaskView
     {
         _service.SortByStatus();
         IEnumerable<TaskItem> tasks = _service.GetAllViewTasks();
-        Console.ReadKey();
         Console.Clear();
         Console.WriteLine("=============      ToDo List      =============");
         Console.WriteLine("|---------------------------------------------|");
@@ -67,10 +67,12 @@ public class ConsoleTaskView: ITaskView
             DisplayTasks();
             Console.WriteLine("\nOptions:");
             Console.WriteLine("1. Add Task");
-            Console.WriteLine("2. Remove Task");
-            Console.WriteLine("3. Toggle Task State");
-            Console.WriteLine("4. Set status");
-            Console.WriteLine("5. Exit");
+            Console.WriteLine("2. Update Task");
+            Console.WriteLine("3. Remove Task");
+            Console.WriteLine("4. Toggle Task State");
+            Console.WriteLine("5. Set status");
+            Console.WriteLine("6. Filter status");
+            Console.WriteLine("7. Exit");
 
             string option = Prompt("Select an option: ");
             switch (option)
@@ -80,20 +82,25 @@ public class ConsoleTaskView: ITaskView
                     _service.AddTask(description);
                     break;
                 case "2":
+                    int updateInt = Convert.ToInt32(Prompt("Enter task id to Uodate: "));
+                    string updateDescription = Prompt("Enter new description: ");
+                    _service.UpdateTask(updateDescription, updateInt);
+                    break;
+                case "3":
                     string removeStr = Prompt("Enter task id to remove: ");
                     if(int.TryParse(removeStr, out int removeId))
                     {
                         _service.RemoveTask(removeId);
                     }
                     break;
-                case "3":
+                case "4":
                     string toggleIdStr = Prompt("Enter task id to toggle: ");
                     if(int.TryParse(toggleIdStr, out int toggleId))
                     {
                         _service.ToggleTaskCompletion(toggleId);
                     }
                     break;
-                case "4":
+                case "5":
                     int IdStr = Convert.ToInt32(Prompt("Enter task id: "));
                     Console.WriteLine("1. To Do");
                     Console.WriteLine("2. In Progress");
@@ -116,7 +123,20 @@ public class ConsoleTaskView: ITaskView
                             break;
                     }
                     break;
-                case "5":
+                case "6":
+                    int index = 0;
+                    foreach(statusProgression status in Enum.GetValues(typeof(statusProgression)))
+                    {
+                        index++;
+                        Console.WriteLine($"{index}. " + status);
+                    }
+                    int prompt = Convert.ToInt32(Prompt("Enter choice to filter: "));
+                    statusProgression chosen = (statusProgression)Enum.GetValues(typeof(statusProgression)).GetValue(prompt - 1);
+                    IMyCollection<TaskItem> array = _service.FilterByStatus(chosen);
+                    _service.List(array, chosen);
+                    Console.ReadKey();                   
+                    break;
+                case "7":
                     return;
                 default:
                     Console.WriteLine("Invalid option. Press any key to continue...");

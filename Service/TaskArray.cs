@@ -49,6 +49,17 @@ public class TaskArray: IMyCollection<TaskItem>
         _tasks = newTaskArray;
     }
 
+    public void Update(string description, TaskItem item)
+    {
+        for(int i = 0; i < _tasks.Length; i++)
+        {
+            if(_tasks[i] == item)
+            {
+                _tasks[i].Description = description;
+            }
+        }
+    }
+
     public void Remove(TaskItem Item)
     {
         if(Item == null) return;
@@ -206,8 +217,6 @@ public class TaskArray: IMyCollection<TaskItem>
             }
             i++;
         }
-        for (int d = 0; d < sortedArray.Length; d++)
-            Console.WriteLine($"[{d}] {(sortedArray[d] == null ? "null" : sortedArray[d].Description)}");
         _viewItems = sortedArray;
     }
 
