@@ -14,6 +14,7 @@ public class TaskService: ITaskService
     }
 
     public IEnumerable<TaskItem> GetAllTasks() => _tasks.ToArray();
+    public IEnumerable<TaskItem> GetAllViewTasks() => _tasks.ToViewArray();
     
     public void AddTask(string description)
     {
@@ -22,7 +23,8 @@ public class TaskService: ITaskService
         {
             Id = id, 
             Description = description, 
-            Completed = false
+            Completed = false,
+            Status = statusProgression.ToDo
         };
         _tasks.Add(newTask);
         _repository.SaveTasks(_tasks.ToArray());
@@ -60,6 +62,20 @@ public class TaskService: ITaskService
                     _repository.SaveTasks(_tasks.ToArray());
                     break;
                 }
+            }
+        }
+    }
+    public void SortByStatus()
+    {
+        _tasks.SortByStatus();
+    }
+    public void ChangeStatus(int id, int status)
+    {
+        for(int i = 0; i < _tasks.ToArray().Length; i++)
+        {
+            if(_tasks.ToArray()[i].Id  == id)
+            {
+                _tasks.ToArray()[i].Status = (statusProgression)status;
             }
         }
     }

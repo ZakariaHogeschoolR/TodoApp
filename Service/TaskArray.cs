@@ -1,8 +1,10 @@
+using System.Data.Common;
 using Model;
 
 public class TaskArray: IMyCollection<TaskItem>
 {
     private TaskItem[] _tasks;
+    private TaskItem[] _viewItems;
     public int Count
     {
         get
@@ -25,6 +27,7 @@ public class TaskArray: IMyCollection<TaskItem>
 
     public TaskArray(TaskItem[] initialTasks = null)
     {
+        _viewItems = initialTasks ?? new TaskItem[0];
         _tasks = initialTasks ?? new TaskItem[0];
     }
     public void Add(TaskItem item)
@@ -84,6 +87,35 @@ public class TaskArray: IMyCollection<TaskItem>
         }
         return null;
     }
+    public struct TaskResult
+    {
+        public int Index { get; set;}
+        public TaskItem Task { get; set; }
+        public TaskResult(int index, TaskItem task)
+        {
+            Index = index;
+            Task = task;
+        }
+    }
+    public TaskResult FindByStatus( statusProgression status, bool[] used, int startIndex = 0)
+    {
+        for (int i = startIndex; i < _tasks.Length; i++)
+        {
+            if(_tasks[i] == null)
+            {
+                continue;
+            }
+            else
+            {
+                if (!used[i] && _tasks[i].Status == status)
+                {
+                    return new TaskResult(i, _tasks[i]);
+                }
+            }
+        }
+
+        return new TaskResult(-1, null);
+    }
 
     public IMyCollection<TaskItem> Filter(Func<TaskItem, bool> predicate)
     {
@@ -119,6 +151,64 @@ public class TaskArray: IMyCollection<TaskItem>
                 }
             }
         }
+    }
+
+    public void SortByStatus()
+    {
+        _viewItems = _tasks;
+        TaskItem[] sortedArray = new TaskItem[(_tasks.Length) * 3];
+        bool[] used = new bool[_tasks.Length];
+
+        int i = 0; // write index in sortedArray
+
+        while (i < _tasks.Length * 3)
+        {
+            // ToDo
+            var r = FindByStatus(statusProgression.ToDo, used);
+            if (r.Task != null)
+            {
+                sortedArray[i] = r.Task;
+                used[r.Index] = true;
+            }
+            else
+            {
+                sortedArray[i] = null;
+            }
+            i++;
+
+            if (i >= _tasks.Length * 3) break;
+
+            // InProgress
+            r = FindByStatus(statusProgression.InProgress, used);
+            if (r.Task != null)
+            {
+                sortedArray[i] = r.Task;
+                used[r.Index] = true;
+            }
+            else
+            {
+                sortedArray[i] = null;
+            }
+            i++;
+
+            if (i >= _tasks.Length * 3) break;
+
+            // Done
+            r = FindByStatus(statusProgression.Done, used);
+            if (r.Task != null)
+            {
+                sortedArray[i] = r.Task;
+                used[r.Index] = true;
+            }
+            else
+            {
+                sortedArray[i] = null;
+            }
+            i++;
+        }
+        for (int d = 0; d < sortedArray.Length; d++)
+            Console.WriteLine($"[{d}] {(sortedArray[d] == null ? "null" : sortedArray[d].Description)}");
+        _viewItems = sortedArray;
     }
 
     public R Reduce<R>(Func<R, TaskItem, R> accumulator)
@@ -158,4 +248,5 @@ public class TaskArray: IMyCollection<TaskItem>
         }
     }
     public TaskItem[] ToArray() => _tasks;
+    public TaskItem[] ToViewArray() => _viewItems;
 }
