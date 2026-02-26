@@ -2,9 +2,8 @@ using Model;
 
 public interface ITaskService
 {
-    IEnumerable<TaskItem> GetAllTasks();
-    IEnumerable<TaskItem> GetAllViewTasks();
-    void AddTask(string description);
+    IMyCollection<TaskItem> GetAllTasks();
+    void AddTask(string description, int priority);
     void UpdateTask(string description, int id);
     void RemoveTask(int id);
     IMyCollection<TaskItem> FilterByStatus(statusProgression status);
@@ -12,5 +11,5 @@ public interface ITaskService
     void ChangeStatus(int id, int status);
     void SortByStatus();
     void List(IMyCollection<TaskItem> collection, statusProgression status);
-
+    void AddTeamMembers();
 }

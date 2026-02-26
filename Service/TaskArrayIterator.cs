@@ -1,10 +1,10 @@
 using Model;
-public class TaskArrayIterator: IMyIterator<TaskItem>
+public class TaskArrayIterator<T>: IMyIterator<T>
 {
-    private TaskItem[] _tasks;
+    private T[] _tasks;
     private int _index;
 
-    public TaskArrayIterator(TaskItem[] tasks)
+    public TaskArrayIterator(T[] tasks)
     {
         _tasks = tasks;
         _index = 0;
@@ -14,14 +14,14 @@ public class TaskArrayIterator: IMyIterator<TaskItem>
     {
         return _index < _tasks.Length;
     }
-    public TaskItem Next()
+    public T Next()
     {
         if(HasNext())
         {
             _index++;
             return _tasks[_index];
         }
-        return default(TaskItem);
+        return default(T);
     }
     public void Reset()
     {

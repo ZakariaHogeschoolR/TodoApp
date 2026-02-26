@@ -6,36 +6,38 @@ using Model;
 public class TaskService: ITaskService
 {
     private readonly ITaskRepository _repository;
-    private readonly TaskArray _tasks;
+    private readonly IMyCollection<TaskItem> _tasks;
 
     public TaskService(ITaskRepository repository)
     {
         _repository = repository;
-        _tasks = new TaskArray(_repository.LoadTasks());
+        _tasks = _repository.LoadTasks(); 
     }
 
-    public IEnumerable<TaskItem> GetAllTasks() => _tasks.ToArray();
-    public IEnumerable<TaskItem> GetAllViewTasks() => _tasks.ToViewArray();
-    
-    public void AddTask(string description)
+    public IMyCollection<TaskItem> GetAllTasks() => _tasks;
+    public void AddTask(string description, int priority)
     {
-        int id = _tasks.ToArray().Length + 1;
+        int id = _tasks.Count + 1;
         TaskItem newTask = new TaskItem
         {
-            Id = id, 
+            Id = _tasks.Count + 1 % 3, 
             Description = description, 
             Completed = false,
-            Status = statusProgression.ToDo
+            Status = statusProgression.ToDo,
+            Priority = priority,
+            TeamMembersArray = new TeamMembers[0],
+            CreatedAt = DateTime.Now
         };
-        _tasks.Add(newTask);
-        _repository.SaveTasks(_tasks.ToArray());
+        var taskArray = (TaskArray<TaskItem>)_tasks;
+        taskArray.Add(newTask);
+        _repository.SaveTasks(taskArray);
     }
 
     public void UpdateTask(string description, int id)
     {
         var task = _tasks.FindBy(id, (t, id) => t.Id == id);
         _tasks.Update(description, task);
-        _repository.SaveTasks(_tasks.ToArray());
+        _repository.SaveTasks(_tasks);
     }
 
     public void RemoveTask(int id)
@@ -44,7 +46,7 @@ public class TaskService: ITaskService
         if(task != null)
         {
             _tasks.Remove(task);
-            _repository.SaveTasks(_tasks.ToArray());
+            _repository.SaveTasks(_tasks);
         }
     }
 
@@ -54,45 +56,55 @@ public class TaskService: ITaskService
         var task = _tasks.FindBy(id, (t, id) => t.Id == id);
         if (task != null) {
             int index = -1;
-            for(int i = 0; i < _tasks.ToArray().Length; i++)
+            for(int i = 0; i < _tasks.Count - 1; i++)
             {
-                if(_tasks.ToArray()[i].Id == id)
+                if (_tasks.FindBy(i, (t, i) => t.Id == i) == null)
+                {
+                    continue;
+                }
+                if(_tasks.FindBy(i, (t, i) => t.Id == i).Id == id)
                 {
                     index = i;
-                    if(_tasks.ToArray()[index].Completed)
+                    if(_tasks.FindBy(index, (t, index) => t.Id == index).Completed)
                     {
-                        _tasks.ToArray()[index].Completed = false;
+                        _tasks.FindBy(index, (t, index) => t.Id == index).Completed = false;
                     }
                     else
                     {
-                        _tasks.ToArray()[index].Completed = true;
+                        _tasks.FindBy(index, (t, index) => t.Id == index).Completed = true;
                     }
-                    _repository.SaveTasks(_tasks.ToArray());
+                    _repository.SaveTasks(_tasks);
                     break;
                 }
             }
         }
     }
+
     public void SortByStatus()
     {
         _tasks.SortByStatus();
     }
+    
     public void ChangeStatus(int id, int status)
     {
-        for(int i = 0; i < _tasks.ToArray().Length; i++)
+        for(int i = 0; i < _tasks.Count; i++)
         {
-            if(_tasks.ToArray()[i].Id  == id)
+            if(_tasks.FindBy(i, (t, i) => t.Id == i) == null)
             {
-                _tasks.ToArray()[i].Status = (statusProgression)status;
+                continue;
+            }
+            if(_tasks.FindBy(i, (t, i) => t.Id == i).Id  == id)
+            {
+                _tasks.FindBy(i, (t, i) => t.Id == i).Status = (statusProgression)status;
             }
         }
-        _repository.SaveTasks(_tasks.ToArray());
+        _repository.SaveTasks(_tasks);
     }
 
     public IMyCollection<TaskItem> FilterByStatus(statusProgression status)
     {
-        TaskArray filtered = (TaskArray)_tasks.Filter(t => t.Status == status);
-        return  new TaskArray(filtered.ToArray());
+        var filtered = _tasks.Filter(t => t.Status == status);
+        return filtered;
     } 
 
     public void List(IMyCollection<TaskItem> collection, statusProgression status )
@@ -105,5 +117,10 @@ public class TaskService: ITaskService
         {
             Console.WriteLine($"| {item.Description}: {item.Status} |");
         }
+    }
+
+    public void AddTeamMembers()
+    {
+        return;
     }
 }

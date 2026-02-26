@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection.Metadata;
 using System.Security.Authentication.ExtendedProtection;
 using System.Threading.Channels;
 using Model;
@@ -13,11 +14,19 @@ public class ConsoleTaskView: ITaskView
     public void DisplayTasks()
     {
         _service.SortByStatus();
-        IEnumerable<TaskItem> tasks = _service.GetAllViewTasks();
+        IMyCollection<TaskItem> tasks = _service.GetAllTasks();
+        int maxDescription = tasks.MaxDescription();
         Console.Clear();
-        Console.WriteLine("=============      ToDo List      =============");
-        Console.WriteLine("|---------------------------------------------|");
-        Console.WriteLine("| ToDo       |    InProgress    |     Done    |");
+        Console.Write(new string('=', maxDescription * 1 + 4));
+        Console.Write("      ToDo List      ");
+        Console.Write(new string('=', maxDescription * 1 + 4));
+        Console.WriteLine();
+        Console.Write("|"); 
+        Console.Write(new string('=', maxDescription * 1 + 14));
+        Console.Write(new string('=', maxDescription * 1 + 14));
+        Console.Write("|");
+        Console.WriteLine();
+        Console.WriteLine($"|{"".PadRight(maxDescription / 2)}ToDo{"".PadRight(maxDescription / 2 - 1)}|{"".PadRight(maxDescription / 2)}InProgress{"".PadRight(maxDescription / 2 - 1)}|{"".PadRight(maxDescription / 2)}Done{"".PadRight(maxDescription / 2 - 1)}|");
 
         int index = 0;
 
@@ -26,11 +35,11 @@ public class ConsoleTaskView: ITaskView
             string cell = task != null ? task.Description : "";
 
             if (index % 3 == 0)
-                Console.Write($"|  {cell.PadRight(12)}");
+                Console.Write($"|  {cell.PadRight(maxDescription)}");
             else if (index % 3 == 1)
-                Console.Write($"|  {cell.PadRight(14)}");
+                Console.Write($"|  {cell.PadRight(maxDescription + 6)}");
             else if (index % 3 == 2)
-                Console.Write($"|  {cell.PadRight(10)}|");
+                Console.Write($"|  {cell.PadRight(maxDescription)}|");
 
             index++;
 
@@ -44,9 +53,9 @@ public class ConsoleTaskView: ITaskView
             while (index % 3 != 0)
             {
                 if (index % 3 == 1)
-                    Console.Write($"|  {"".PadRight(14)}");
+                    Console.Write($"|  {"".PadRight(maxDescription)}");
                 else if (index % 3 == 2)
-                    Console.Write($"|  {"".PadRight(10)}|");
+                    Console.Write($"|  {"".PadRight(maxDescription)}|");
                 index++;
             }
             Console.WriteLine();
@@ -79,12 +88,15 @@ public class ConsoleTaskView: ITaskView
             {
                 case "1":
                     string description  = Prompt("Enter task description: ");
-                    _service.AddTask(description);
+                    int priority = Convert.ToInt32(Prompt("Enter an int for priority: "));
+                    _service.AddTask(description, priority);
+                    _service.SortByStatus();
                     break;
                 case "2":
                     int updateInt = Convert.ToInt32(Prompt("Enter task id to Uodate: "));
                     string updateDescription = Prompt("Enter new description: ");
                     _service.UpdateTask(updateDescription, updateInt);
+                    _service.SortByStatus();
                     break;
                 case "3":
                     string removeStr = Prompt("Enter task id to remove: ");
@@ -92,6 +104,7 @@ public class ConsoleTaskView: ITaskView
                     {
                         _service.RemoveTask(removeId);
                     }
+                    _service.SortByStatus();
                     break;
                 case "4":
                     string toggleIdStr = Prompt("Enter task id to toggle: ");
@@ -99,6 +112,7 @@ public class ConsoleTaskView: ITaskView
                     {
                         _service.ToggleTaskCompletion(toggleId);
                     }
+                    _service.SortByStatus();
                     break;
                 case "5":
                     int IdStr = Convert.ToInt32(Prompt("Enter task id: "));
@@ -122,6 +136,7 @@ public class ConsoleTaskView: ITaskView
                             Console.ReadKey();
                             break;
                     }
+                    _service.SortByStatus();
                     break;
                 case "6":
                     int index = 0;
@@ -134,13 +149,20 @@ public class ConsoleTaskView: ITaskView
                     statusProgression chosen = (statusProgression)Enum.GetValues(typeof(statusProgression)).GetValue(prompt - 1);
                     IMyCollection<TaskItem> array = _service.FilterByStatus(chosen);
                     _service.List(array, chosen);
-                    Console.ReadKey();                   
+                    Console.ReadKey(); 
+                    _service.SortByStatus();                  
                     break;
                 case "7":
+                    _service.AddTeamMembers();
+                    _service.SortByStatus();
+                    break;
+                case "8":
+                    _service.SortByStatus();
                     return;
                 default:
                     Console.WriteLine("Invalid option. Press any key to continue...");
                     Console.ReadKey();
+                    _service.SortByStatus();
                     break;
             }
         }
