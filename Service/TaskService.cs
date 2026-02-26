@@ -1,123 +1,126 @@
+using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.Security.Cryptography.X509Certificates;
 using Model;
 
-public class TaskService: ITaskService, IMyCollection<TaskItem>//, IMyIterator<TaskItem>
+public class TaskService: ITaskService
 {
     private readonly ITaskRepository _repository;
-    private TaskItem[] _tasks;
+    private readonly IMyCollection<TaskItem> _tasks;
+
     public TaskService(ITaskRepository repository)
     {
         _repository = repository;
-        _tasks = _repository.LoadTasks();
+        _tasks = _repository.LoadTasks(); 
     }
 
-    public IEnumerable<TaskItem> GetAllTasks() => _tasks;
-    
-    public void AddTask(string description)
+    public IMyCollection<TaskItem> GetAllTasks() => _tasks;
+    public void AddTask(string description, int priority)
     {
-        int id = _tasks.Length + 1;
+        int id = _tasks.Count + 1;
         TaskItem newTask = new TaskItem
         {
-            Id = id, 
+            Id = _tasks.Count + 1 % 3, 
             Description = description, 
-            Completed = false
+            Completed = false,
+            Status = statusProgression.ToDo,
+            Priority = priority,
+            TeamMembersArray = new TeamMembers[0],
+            CreatedAt = DateTime.Now
         };
-        Add(newTask);
+        var taskArray = (TaskArray<TaskItem>)_tasks;
+        taskArray.Add(newTask);
+        _repository.SaveTasks(taskArray);
     }
 
-    public void Add(TaskItem item)
+    public void UpdateTask(string description, int id)
     {
-        int size = _tasks.Length + 1;
-        TaskItem[] newTaskArray = new TaskItem[size];
-        for(int i = 0; i < newTaskArray.Length; i++)
-        {
-            if(i > _tasks.Length - 1)
-            {
-                newTaskArray[size - 1] = item;
-                break;
-            }
-            else
-            {
-                newTaskArray[i] = _tasks[i];
-            }
-        }
-        _tasks = newTaskArray;
-        _repository.SaveTasks(newTaskArray);
-    }
-
-    public TaskItem FindBy<K>(K key, Func<TaskItem, K, bool> comparer)
-    {
-        for(int i = 0; i < _tasks.Length; i++)
-        {
-            if(comparer(_tasks[i], key))
-            {
-                return _tasks[i];
-            }
-        }
-        return null;
+        var task = _tasks.FindBy(id, (t, id) => t.Id == id);
+        _tasks.Update(description, task);
+        _repository.SaveTasks(_tasks);
     }
 
     public void RemoveTask(int id)
     {
-        var task = FindBy(id, (t, id) => t.Id == id);
+        var task = _tasks.FindBy(id, (t, id) => t.Id == id);
         if(task != null)
         {
-            Remove(task);
+            _tasks.Remove(task);
+            _repository.SaveTasks(_tasks);
         }
-    }
-
-    public void Remove(TaskItem Item)
-    {
-        if(Item == null) return;
-
-        int index = -1;
-
-        for (int i = 0; i < _tasks.Length; i++)
-        {
-            if (_tasks[i] == Item)
-            {
-                index = i;
-                break;
-            }
-        }
-        if(index == -1) return;
-
-        TaskItem[] newArray = new TaskItem[_tasks.Length - 1];
-        
-        for (int i = 0, j = 0; i < _tasks.Length; i++)
-        {
-            if (i == index) continue; // overslaan
-            newArray[j] = _tasks[i];
-            j++;
-        }
-        _tasks = newArray;
-        _repository.SaveTasks(newArray);
     }
 
     public void ToggleTaskCompletion(int id)
     {
 
-        var task = FindBy(id, (t, id) => t.Id == id);
+        var task = _tasks.FindBy(id, (t, id) => t.Id == id);
         if (task != null) {
             int index = -1;
-            for(int i = 0; i < _tasks.Length - 1; i++)
+            for(int i = 0; i < _tasks.Count - 1; i++)
             {
-                if(_tasks[i].Id == id)
+                if (_tasks.FindBy(i, (t, i) => t.Id == i) == null)
+                {
+                    continue;
+                }
+                if(_tasks.FindBy(i, (t, i) => t.Id == i).Id == id)
                 {
                     index = i;
-                    if(_tasks[index].Completed)
+                    if(_tasks.FindBy(index, (t, index) => t.Id == index).Completed)
                     {
-                        _tasks[index].Completed = false;
+                        _tasks.FindBy(index, (t, index) => t.Id == index).Completed = false;
                     }
                     else
                     {
-                        _tasks[index].Completed = true;
+                        _tasks.FindBy(index, (t, index) => t.Id == index).Completed = true;
                     }
                     _repository.SaveTasks(_tasks);
                     break;
                 }
             }
         }
+    }
+
+    public void SortByStatus()
+    {
+        _tasks.SortByStatus();
+    }
+    
+    public void ChangeStatus(int id, int status)
+    {
+        for(int i = 0; i < _tasks.Count; i++)
+        {
+            if(_tasks.FindBy(i, (t, i) => t.Id == i) == null)
+            {
+                continue;
+            }
+            if(_tasks.FindBy(i, (t, i) => t.Id == i).Id  == id)
+            {
+                _tasks.FindBy(i, (t, i) => t.Id == i).Status = (statusProgression)status;
+            }
+        }
+        _repository.SaveTasks(_tasks);
+    }
+
+    public IMyCollection<TaskItem> FilterByStatus(statusProgression status)
+    {
+        var filtered = _tasks.Filter(t => t.Status == status);
+        return filtered;
+    } 
+
+    public void List(IMyCollection<TaskItem> collection, statusProgression status )
+    {
+        Console.Clear();
+        Console.WriteLine("=============      ToDo List      =============");
+        Console.WriteLine("|---------------------------------------------|");
+        Console.WriteLine($"|  {status}  |");
+        foreach(TaskItem item in collection)
+        {
+            Console.WriteLine($"| {item.Description}: {item.Status} |");
+        }
+    }
+
+    public void AddTeamMembers()
+    {
+        return;
     }
 }
