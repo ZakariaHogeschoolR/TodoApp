@@ -1,10 +1,23 @@
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.Security.Cryptography.X509Certificates;
+using System.Diagnostics.CodeAnalysis;
 using Model;
 
 public class TaskService: ITaskService
 {
+    private static int _idCount = 0;
+    public static int IdCount
+    {
+        get
+        {
+            return _idCount;
+        }
+        set
+        {
+            _idCount += value;
+        }
+    }
     private readonly ITaskRepository _repository;
     private readonly IMyCollection<TaskItem> _tasks;
 
@@ -18,9 +31,11 @@ public class TaskService: ITaskService
     public void AddTask(string description, int priority)
     {
         int id = _tasks.Count + 1;
+        IdCount = 1;
         TaskItem newTask = new TaskItem
         {
             Id = _tasks.Count + 1 % 3, 
+            showId = IdCount,
             Description = description, 
             Completed = false,
             Status = statusProgression.ToDo,
@@ -35,14 +50,25 @@ public class TaskService: ITaskService
 
     public void UpdateTask(string description, int id)
     {
-        var task = _tasks.FindBy(id, (t, id) => t.Id == id);
-        _tasks.Update(description, task);
+        var task = _tasks.FindBy(id, (t, id) => t.showId == id);
+        TaskItem newTask = new TaskItem
+        {
+            Id = task.Id, 
+            showId = task.showId,
+            Description = description, 
+            Completed = task.Completed,
+            Status = task.Status,
+            Priority = task.Priority,
+            TeamMembersArray = task.TeamMembersArray,
+            CreatedAt = task.CreatedAt
+        };
+        _tasks.Update(newTask, task);
         _repository.SaveTasks(_tasks);
     }
 
     public void RemoveTask(int id)
     {
-        var task = _tasks.FindBy(id, (t, id) => t.Id == id);
+        var task = _tasks.FindBy(id, (t, id) => t.showId == id);
         if(task != null)
         {
             _tasks.Remove(task);
@@ -58,20 +84,20 @@ public class TaskService: ITaskService
             int index = -1;
             for(int i = 0; i < _tasks.Count - 1; i++)
             {
-                if (_tasks.FindBy(i, (t, i) => t.Id == i) == null)
+                if (_tasks.FindBy(i, (t, i) => t.showId == i) == null)
                 {
                     continue;
                 }
-                if(_tasks.FindBy(i, (t, i) => t.Id == i).Id == id)
+                if(_tasks.FindBy(i, (t, i) => t.Id == i).showId == id)
                 {
                     index = i;
-                    if(_tasks.FindBy(index, (t, index) => t.Id == index).Completed)
+                    if(_tasks.FindBy(index, (t, index) => t.showId == index).Completed)
                     {
-                        _tasks.FindBy(index, (t, index) => t.Id == index).Completed = false;
+                        _tasks.FindBy(index, (t, index) => t.showId == index).Completed = false;
                     }
                     else
                     {
-                        _tasks.FindBy(index, (t, index) => t.Id == index).Completed = true;
+                        _tasks.FindBy(index, (t, index) => t.showId == index).Completed = true;
                     }
                     _repository.SaveTasks(_tasks);
                     break;
@@ -82,20 +108,24 @@ public class TaskService: ITaskService
 
     public void SortByStatus()
     {
-        _tasks.SortByStatus();
+        
+        if (_tasks is ITaskArray<TaskItem> taskArray)
+        {
+            taskArray.SortByStatus(); // ✅
+        }
     }
     
     public void ChangeStatus(int id, int status)
     {
         for(int i = 0; i < _tasks.Count; i++)
         {
-            if(_tasks.FindBy(i, (t, i) => t.Id == i) == null)
+            if(_tasks.FindBy(i, (t, i) => t.showId == i) == null)
             {
                 continue;
             }
-            if(_tasks.FindBy(i, (t, i) => t.Id == i).Id  == id)
+            if(_tasks.FindBy(i, (t, i) => t.showId == i).showId  == id)
             {
-                _tasks.FindBy(i, (t, i) => t.Id == i).Status = (statusProgression)status;
+                _tasks.FindBy(i, (t, i) => t.showId == i).Status = (statusProgression)status;
             }
         }
         _repository.SaveTasks(_tasks);
