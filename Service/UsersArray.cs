@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using Model;
 using System.Diagnostics.CodeAnalysis;
 
-public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
+public class UsersArray<T>: IMyCollection<T> where T : Users
 {
     private T[] _tasks;
     private int _count;
@@ -34,7 +34,7 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
         }
     }
 
-    public TaskArray(T[] initialTasks = null)
+    public UsersArray(T[] initialTasks = null)
     {
         if (initialTasks != null)
         {
@@ -51,18 +51,17 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
     public void Add(T item)
     {
         if (item == null) return;
-        T[] array = new T[Count + 3];
+        T[] array = new T[Count + 1];
         for(int i = 0; i < Count; i++)
         {
             array[i] = _tasks[i]; // copy existing tasks
         }
         item.Id = Count + 1;
-        array[Count + 2] = item; // place new item at end
+        array[Count] = item; // place new item at end
         _tasks = array;
-        Count += 3; // increment after
+        Count += 1; // increment after
         _dirty = true;
     }
-
 
     public void Update(T change, T item)
     {
@@ -104,7 +103,7 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
         _dirty = false;
     }
 
-    public T? FindBy<K>(K Key, Func<T, K, bool> comparer)
+    public T FindBy<K>(K Key, Func<T, K, bool> comparer)
     {
         for(int i = 0; i < Count; i++)
         {
@@ -123,32 +122,12 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
     public struct TaskResult
     {
         public int Index { get; set;}
-        public T? Task { get; set; }
-        public TaskResult(int index, T? task)
+        public T Task { get; set; }
+        public TaskResult(int index, T task)
         {
             Index = index;
             Task = task;
         }
-    }
-
-    public TaskResult FindByStatus( statusProgression status, bool[] used, int startIndex = 0)
-    {
-        for (int i = startIndex; i < Count + 1; i++)
-        {
-            if(_tasks[i] == null)
-            {
-                continue;
-            }
-            else
-            {
-                if (!used[i] && _tasks[i].Status == status)
-                {
-                    return new TaskResult(i, _tasks[i]);
-                }
-            }
-        }
-
-        return new TaskResult(-1, null);
     }
 
     public IMyCollection<T> Filter(Func<T, bool> predicate)
@@ -172,7 +151,7 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
         {
             TaskItemArray[j] = temporaryArray[j];
         }
-        return new TaskArray<T>(TaskItemArray);
+        return new UsersArray<T>(TaskItemArray);
     }
 
     public void Sort(Comparison<T> comparison)
@@ -191,116 +170,7 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
         }
         _dirty = false;
     }
-
-    public int MaxDescription()
-    {
-        T? maxDescription = null;
-        for(int i = 0; i < Count; i++)
-        {
-            if(_tasks[i] == null)
-            {
-                continue;
-            }
-            if(maxDescription == null)
-            {
-                maxDescription = _tasks[i];
-            }
-            if(maxDescription.Description.Length < _tasks[i].Description.Length)
-            {
-                maxDescription = _tasks[i];
-            }
-        }
-        if(maxDescription == null)
-        {
-            return 10;
-        }else
-        {
-            return maxDescription.Description.Length;
-        }
-    }
-
-
-    public void SortByStatus()
-    {
-        if (Count <= 0) return;
-
-        T[] sorted = new T[Count];
-
-        int todoIndex = 0;
-        int inProgressIndex = 1;
-        int doneIndex = 2;
-
-        for (int i = 0; i < Count; i++)
-        {
-            T task = _tasks[i];
-            if(task == null)
-            {
-                continue;
-            }
-            switch (task.Status)
-            {
-                case statusProgression.ToDo:
-                    if (todoIndex < Count)
-                    {
-                        task.Id = todoIndex;
-                        sorted[todoIndex] = task;
-                        todoIndex += 3;
-                    }
-                    break;
-
-                case statusProgression.InProgress:
-                    if (inProgressIndex < Count)
-                    {
-                        task.Id  = inProgressIndex;
-                        sorted[inProgressIndex] = task;
-                        inProgressIndex += 3;
-                    }
-                    break;
-
-                case statusProgression.Done:
-                    if (doneIndex < Count)
-                    {
-                        task.Id = doneIndex;
-                        sorted[doneIndex] = task;
-                        doneIndex += 3;
-                    }
-                    break;
-            }
-        }
-        T[] sortedArray = RemoveNull(sorted);
-        Count = sortedArray.Length;
-        _tasks = sortedArray;
-        Dirty = false;
-    }
-
-    public T[] RemoveNull(T[] array)
-    {
-        int index = -1;
-
-        for (int i = 0; i < array.Length; i += 3)
-        {
-            bool rowHasData =
-                (i < array.Length && array[i] != null) ||
-                (i + 1 < array.Length && array[i + 1] != null) ||
-                (i + 2 < array.Length && array[i + 2] != null);
-
-            if (rowHasData)
-            {
-                index = i;
-            }
-        }
-
-        if (index == -1)
-            return new T[0];
-
-        int newLength = index + 3;
-
-        T[] result = new T[newLength];
-        Array.Copy(array, result, newLength);
-
-        return result;
-    }
-
+    
     public R Reduce<R>(Func<R, T, R> accumulator)
     {
         if(Count + 1 == 0 )

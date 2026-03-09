@@ -1,4 +1,5 @@
 using Model;
+using System.Diagnostics.CodeAnalysis;
 public class TaskArrayIterator<T>: IMyIterator<T>
 {
     private T[] _tasks;

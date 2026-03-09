@@ -10,6 +10,7 @@ namespace Model
     public class TaskItem
     {
         public int Id { get; set; }
+        public int showId { get; set; }
         public required string Description { get; set; }
         public bool Completed { get; set; }
         public statusProgression Status { get; set; }

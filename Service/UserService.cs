@@ -1,62 +1,98 @@
-// using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.X509Certificates;
+using System.Diagnostics.CodeAnalysis;
 
-// public class UserService
-// {
-//     private Users[] _users;
-//     private int _count; 
+public class UserService: IUserService
+{
+    private static int _idCount = 0;
+    public static int IdCount
+    {
+        get
+        {
+            return _idCount;
+        }
+        set
+        {
+            _idCount += value;
+        }
+    }
+    private readonly IUserRepository _repository;
+    private readonly IMyCollection<Users> _users;
 
-//     public int Count
-//     {
-//         get { return _count; }
-//         set { _count = value; }
-//     }
-//     private Users _currentUser;
+    public UserService(IUserRepository repository)
+    {
+        _repository = repository;
+        _users = _repository.LoadTasks(); 
+    }
 
-//     public void Login(int userId)
-//     {
-//         var user = FindBy(userId, (u, id) => u.Id == id);
+    public IMyCollection<Users> GetAllUsers() => _users;
+    public void AddUser(string userName, string password, string repeatPassword)
+    {
+        int id = _users.Count ;
+        IdCount = 1;
+        Users newUser = new Users
+        {
+            Id = _users.Count + 1, 
+            Name = userName,
+            Password = password,
+            RepeatPassword = repeatPassword
+        };
+        var userArray = (UsersArray<Users>)_users;
+        userArray.Add(newUser);
+        _repository.SaveTasks(userArray);
+    }
 
-//         _currentUser = user;
-//     }
+    public void UpdateUser(string password, string repeatPassword, int id)
+    {
+        var user = _users.FindBy(id, (t, id) => t.Id == id);
+        Users newUser = new Users
+        {
+            Id = _users.Count + 1, 
+            Name = user.Name,
+            Password = password,
+            RepeatPassword = repeatPassword
+        };
+        _users.Update(newUser, user);
+        _repository.SaveTasks(_users);
+    }
 
-//     public Users CurrentUser => _currentUser;
+    public void UpdateUser(string name, int id)
+    {
+        var user = _users.FindBy(id, (t, id) => t.Id == id);
+        Users newUser = new Users
+        {
+            Id = _users.Count + 1, 
+            Name = name,
+            Password = user.Password,
+            RepeatPassword = user.RepeatPassword
+        };
+        _users.Update(newUser, user);
+        _repository.SaveTasks(_users);
+    }
 
-//     public void Register()
-//     {
+    public void RemoveUser(int id)
+    {
+        var user = _users.FindBy(id, (t, id) => t.Id == id);
+        if(user != null)
+        {
+            _users.Remove(user);
+            _repository.SaveTasks(_users);
+        }
+    }
 
-//         var register = FindBy(user.Id, (u, id) => u.Id == id);
-//         if(register == null)
-//         {
-//             AddUser(user);
-//         }
-//     }
-
-//     public void AddUser(Users user)
-//     {
-//         Users[] users = new Users[Count + 1];
-        
-//         for(int i = 0; i < Count; i++)
-//         {
-//             users[i] = _users[i];
-//         }
-
-//         users[Count + 1] = user;
-//         Count++;
-//     }
-
-//     public Users FindBy<K>(K Key, Func<Users, K, bool> comparer)
-//     {
-//         for(int i = 0; i < Count; i++)
-//         {
-//             if(_users[i] == null)
-//             {
-//                 continue;
-//             }
-//             if(comparer(_users[i], Key))
-//             {
-//                 return _users[i];
-//             }
-//         }
-//         return null;
-//     }
-// }
+    public bool CheckCredentials(string username, string password)
+    {
+        Users[] users = _users.ToArray();
+        for(int i = 0; i < users.Length; i++)
+        {
+            if(users[i] == null)
+            {
+                continue;
+            }
+            if(users[i].Name == username && users[i].Password == password )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
