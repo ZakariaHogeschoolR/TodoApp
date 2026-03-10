@@ -111,7 +111,7 @@ public class ConsoleTaskView: ITaskView
 
     public void Run()
     {
-        while (true)
+        while(true)
         {
             Console.Clear();
             Console.WriteLine("");
@@ -122,117 +122,113 @@ public class ConsoleTaskView: ITaskView
             string password = Prompt("Please enter your Password: ");
             if(_userService.CheckCredentials(username, password))
             {
-                DisplayTasks();
-                Console.WriteLine("\nOptions:");
-                Console.WriteLine("1. Add Task");
-                Console.WriteLine("2. Update Task");
-                Console.WriteLine("3. Remove Task");
-                Console.WriteLine("4. Toggle Task State");
-                Console.WriteLine("5. Set status");
-                Console.WriteLine("6. Filter status");
-                Console.WriteLine("7. Add Team members/member");
-                Console.WriteLine("8. Exit");
-
-                string option = Prompt("Select an option: ");
-                switch (option)
+                while (true)
                 {
-                    case "1":
-                        string description  = Prompt("Enter task description: ");
-                        int priority = Convert.ToInt32(Prompt("Enter an int for priority: "));
-                        _taskService.AddTask(description, priority);
-                        _taskService.SortByStatus();
-                        break;
-                    case "2":
-                        int updateInt = Convert.ToInt32(Prompt("Enter task id to Uodate: "));
-                        string updateDescription = Prompt("Enter new description: ");
-                        _taskService.UpdateTask(updateDescription, updateInt);
-                        _taskService.SortByStatus();
-                        break;
-                    case "3":
-                        string removeStr = Prompt("Enter task id to remove: ");
-                        if(int.TryParse(removeStr, out int removeId))
-                        {
-                            _taskService.RemoveTask(removeId);
-                        }
-                        _taskService.SortByStatus();
-                        break;
-                    case "4":
-                        string toggleIdStr = Prompt("Enter task id to toggle: ");
-                        if(int.TryParse(toggleIdStr, out int toggleId))
-                        {
-                            _taskService.ToggleTaskCompletion(toggleId);
-                        }
-                        _taskService.SortByStatus();
-                        break;
-                    case "5":
-                        int IdStr = Convert.ToInt32(Prompt("Enter task id: "));
-                        Console.WriteLine("1. To Do");
-                        Console.WriteLine("2. In Progress");
-                        Console.WriteLine("3. Done");
-                        int Status = Convert.ToInt32(Prompt("Enter task status id: "));
-                        switch(Status)
-                        {
-                            case 1:
-                                _taskService.ChangeStatus(IdStr, Status);
-                                break;
-                            case 2:
-                                _taskService.ChangeStatus(IdStr, Status);
-                                break;
-                            case 3:
-                                _taskService.ChangeStatus(IdStr, Status);
-                                break;
-                            default:
-                                Console.WriteLine("Invalid option. Press any key to continue...");
-                                Console.ReadKey();
-                                break;
-                        }
-                        _taskService.SortByStatus();
-                        break;
-                    case "6":
-                        int index = 0;
-                        foreach(statusProgression status in Enum.GetValues(typeof(statusProgression)))
-                        {
-                            index++;
-                            Console.WriteLine($"{index}. " + status);
-                        }
-                        int prompt = Convert.ToInt32(Prompt("Enter choice to filter: "));
-                        statusProgression chosen = (statusProgression)Enum.GetValues(typeof(statusProgression)).GetValue(prompt - 1);
-                        IMyCollection<TaskItem> array = _taskService.FilterByStatus(chosen);
-                        _taskService.List(array, chosen);
-                        Console.ReadKey(); 
-                        _taskService.SortByStatus();                  
-                        break;
-                    case "7":
-                        _taskService.AddTeamMembers();
-                        _taskService.SortByStatus();
-                        break;
-                    case "8":
-                        _taskService.SortByStatus();
-                        return;
-                    default:
-                        Console.WriteLine("Invalid option. Press any key to continue...");
-                        Console.ReadKey();
-                        _taskService.SortByStatus();
-                        break;
+                    DisplayTasks();
+                    Console.WriteLine("\nOptions:");
+                    Console.WriteLine("1. Add Task");
+                    Console.WriteLine("2. Update Task");
+                    Console.WriteLine("3. Remove Task");
+                    Console.WriteLine("4. Toggle Task State");
+                    Console.WriteLine("5. Set status");
+                    Console.WriteLine("6. Filter status");
+                    Console.WriteLine("7. Add Team members/member");
+                    Console.WriteLine("8. Exit");
+
+                    string option = Prompt("Select an option: ");
+                    switch (option)
+                    {
+                        case "1":
+                            string description  = Prompt("Enter task description: ");
+                            int priority = Convert.ToInt32(Prompt("Enter an int for priority: "));
+                            _taskService.AddTask(description, priority);
+                            _taskService.SortByStatus();
+                            break;
+                        case "2":
+                            int updateInt = Convert.ToInt32(Prompt("Enter task id to Uodate: "));
+                            string updateDescription = Prompt("Enter new description: ");
+                            _taskService.UpdateTask(updateDescription, updateInt);
+                            _taskService.SortByStatus();
+                            break;
+                        case "3":
+                            string removeStr = Prompt("Enter task id to remove: ");
+                            if(int.TryParse(removeStr, out int removeId))
+                            {
+                                _taskService.RemoveTask(removeId);
+                            }
+                            _taskService.SortByStatus();
+                            break;
+                        case "4":
+                            string toggleIdStr = Prompt("Enter task id to toggle: ");
+                            if(int.TryParse(toggleIdStr, out int toggleId))
+                            {
+                                _taskService.ToggleTaskCompletion(toggleId);
+                            }
+                            _taskService.SortByStatus();
+                            break;
+                        case "5":
+                            int IdStr = Convert.ToInt32(Prompt("Enter task id: "));
+                            Console.WriteLine("1. To Do");
+                            Console.WriteLine("2. In Progress");
+                            Console.WriteLine("3. Done");
+                            int Status = Convert.ToInt32(Prompt("Enter task status id: "));
+                            switch(Status)
+                            {
+                                case 1:
+                                    _taskService.ChangeStatus(IdStr, Status);
+                                    break;
+                                case 2:
+                                    _taskService.ChangeStatus(IdStr, Status);
+                                    break;
+                                case 3:
+                                    _taskService.ChangeStatus(IdStr, Status);
+                                    break;
+                                default:
+                                    Console.WriteLine("Invalid option. Press any key to continue...");
+                                    Console.ReadKey();
+                                    break;
+                            }
+                            _taskService.SortByStatus();
+                            break;
+                        case "6":
+                            int index = 0;
+                            foreach(statusProgression status in Enum.GetValues(typeof(statusProgression)))
+                            {
+                                index++;
+                                Console.WriteLine($"{index}. " + status);
+                            }
+                            int prompt = Convert.ToInt32(Prompt("Enter choice to filter: "));
+                            statusProgression chosen = (statusProgression)Enum.GetValues(typeof(statusProgression)).GetValue(prompt - 1);
+                            IMyCollection<TaskItem> array = _taskService.FilterByStatus(chosen);
+                            _taskService.List(array, chosen);
+                            Console.ReadKey(); 
+                            _taskService.SortByStatus();                  
+                            break;
+                        case "7":
+                            _taskService.AddTeamMembers();
+                            _taskService.SortByStatus();
+                            break;
+                        case "8":
+                            _taskService.SortByStatus();
+                            return;
+                        default:
+                            Console.WriteLine("Invalid option. Press any key to continue...");
+                            Console.ReadKey();
+                            _taskService.SortByStatus();
+                            break;
+                    }
                 }
             }
             else
             {
-                if (ConsoleTaskView.count >= 2)
-                {
-                    Console.Clear();
-                    Console.WriteLine("");
-                    Console.WriteLine("");
-                    Console.WriteLine("Please register an account");
-                    string Username = Prompt("Enter your Username: ");
-                    string Password = Prompt("Enter your Password: ");
-                    string RepeatPassword = Prompt("Enter your Password agian: ");
-                    _userService.AddUser(Username, Password, RepeatPassword);   
-                }
-                else
-                {
-                    ConsoleTaskView.count++;
-                }
+                Console.Clear();
+                Console.WriteLine("");
+                Console.WriteLine("");
+                Console.WriteLine("Please register an account");
+                string Username = Prompt("Enter your Username: ");
+                string Password = Prompt("Enter your Password: ");
+                string RepeatPassword = Prompt("Enter your Password agian: ");
+                _userService.AddUser(Username, Password, RepeatPassword);   
             }
         }
     }
