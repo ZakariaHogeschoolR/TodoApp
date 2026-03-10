@@ -31,6 +31,7 @@ public class TaskService: ITaskService
     public void AddTask(string description, int priority)
     {
         int id = _tasks.Count + 1;
+        _idCount = _tasks.Count / 3;
         IdCount = 1;
         TaskItem newTask = new TaskItem
         {
