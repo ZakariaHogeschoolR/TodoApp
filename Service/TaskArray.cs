@@ -8,6 +8,19 @@ using System.Diagnostics.CodeAnalysis;
 
 public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
 {
+    private class Node
+    {
+        private T _data;
+        public Node? next;
+        public Node? prev;
+        public Node(T data)
+        {
+            _data = data;
+            next = null;
+            prev = null;
+        }
+    }
+
     private T[] _tasks;
     private int _count;
     public int Count
@@ -90,17 +103,39 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
                 break;
             }
         }
-        if(index == -1) return;
 
-        T[] newArray = new T[Count];
-        
-        for (int i = 0, j = 0; i < Count; i++)
+        if(index == -1) return;
+            int rowStart = (index / 3) * 3;
+
+        int itemsInRow = 0;
+
+        for (int i = rowStart; i < rowStart + 3 && i < Count; i++)
         {
-            if (i == index) continue; // overslaan
-            newArray[j] = _tasks[i];
-            j++;
+            if (_tasks[i] != null)
+            {
+                itemsInRow++;
+            }
         }
-        _tasks = newArray;
+        if (itemsInRow == 1)
+        {
+            T[] newArray = new T[Count - 3];
+
+            for (int i = 0, j = 0; i < Count; i++)
+            {
+                if (i >= rowStart && i < rowStart + 3)
+                    continue;
+
+                newArray[j++] = _tasks[i];
+            }
+
+            _tasks = newArray;
+            Count -= 3;
+        }
+        else
+        {
+            // remove only the item
+            _tasks[index] = default;
+        }
         _dirty = false;
     }
 
@@ -267,38 +302,9 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
                     break;
             }
         }
-        T[] sortedArray = RemoveNull(sorted);
-        Count = sortedArray.Length;
-        _tasks = sortedArray;
+        Count = sorted.Length;
+        _tasks = sorted;
         Dirty = false;
-    }
-
-    public T[] RemoveNull(T[] array)
-    {
-        int index = -1;
-
-        for (int i = 0; i < array.Length; i += 3)
-        {
-            bool rowHasData =
-                (i < array.Length && array[i] != null) ||
-                (i + 1 < array.Length && array[i + 1] != null) ||
-                (i + 2 < array.Length && array[i + 2] != null);
-
-            if (rowHasData)
-            {
-                index = i;
-            }
-        }
-
-        if (index == -1)
-            return new T[0];
-
-        int newLength = index + 3;
-
-        T[] result = new T[newLength];
-        Array.Copy(array, result, newLength);
-
-        return result;
     }
 
     public R Reduce<R>(Func<R, T, R> accumulator)
