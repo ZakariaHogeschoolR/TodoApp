@@ -6,6 +6,4 @@ public interface ITaskArray<T>: IMyCollection<T> where T : TaskItem
 
 
     void SortByStatus();
-
-    T[] RemoveNull(T[] array);
 }

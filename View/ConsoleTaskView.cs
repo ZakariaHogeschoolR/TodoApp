@@ -132,25 +132,28 @@ public class ConsoleTaskView: ITaskView
                     Console.WriteLine("4. Toggle Task State");
                     Console.WriteLine("5. Set status");
                     Console.WriteLine("6. Filter status");
-                    Console.WriteLine("7. Add Team members/member");
+                    Console.WriteLine("7. Add Yourself to task");
                     Console.WriteLine("8. Exit");
 
                     string option = Prompt("Select an option: ");
                     switch (option)
                     {
                         case "1":
+                            _taskService.SortByStatus();
                             string description  = Prompt("Enter task description: ");
                             int priority = Convert.ToInt32(Prompt("Enter an int for priority: "));
                             _taskService.AddTask(description, priority);
                             _taskService.SortByStatus();
                             break;
                         case "2":
+                            _taskService.SortByStatus();
                             int updateInt = Convert.ToInt32(Prompt("Enter task id to Uodate: "));
                             string updateDescription = Prompt("Enter new description: ");
                             _taskService.UpdateTask(updateDescription, updateInt);
                             _taskService.SortByStatus();
                             break;
                         case "3":
+                            _taskService.SortByStatus();
                             string removeStr = Prompt("Enter task id to remove: ");
                             if(int.TryParse(removeStr, out int removeId))
                             {
@@ -159,6 +162,7 @@ public class ConsoleTaskView: ITaskView
                             _taskService.SortByStatus();
                             break;
                         case "4":
+                            _taskService.SortByStatus();
                             string toggleIdStr = Prompt("Enter task id to toggle: ");
                             if(int.TryParse(toggleIdStr, out int toggleId))
                             {
@@ -167,6 +171,7 @@ public class ConsoleTaskView: ITaskView
                             _taskService.SortByStatus();
                             break;
                         case "5":
+                            _taskService.SortByStatus();
                             int IdStr = Convert.ToInt32(Prompt("Enter task id: "));
                             Console.WriteLine("1. To Do");
                             Console.WriteLine("2. In Progress");
@@ -191,6 +196,7 @@ public class ConsoleTaskView: ITaskView
                             _taskService.SortByStatus();
                             break;
                         case "6":
+                            _taskService.SortByStatus();  
                             int index = 0;
                             foreach(statusProgression status in Enum.GetValues(typeof(statusProgression)))
                             {
@@ -201,14 +207,19 @@ public class ConsoleTaskView: ITaskView
                             statusProgression chosen = (statusProgression)Enum.GetValues(typeof(statusProgression)).GetValue(prompt - 1);
                             IMyCollection<TaskItem> array = _taskService.FilterByStatus(chosen);
                             _taskService.List(array, chosen);
-                            Console.ReadKey(); 
-                            _taskService.SortByStatus();                  
+                            Console.ReadKey();
+                            _taskService.SortByStatus();                 
                             break;
                         case "7":
-                            _taskService.AddTeamMembers();
+                            _taskService.SortByStatus();
+                            int id = Convert.ToInt32(Prompt("Enter task id: "));
+                            IMyCollection<TaskItem> task = _taskService.GetAllTasks();
+                            TaskItem taskItem = task.FindBy(id, (task, id) => task.showId == id);
+                            _taskService.AddTeamMembers(taskItem, _userService.CurrentUser);
                             _taskService.SortByStatus();
                             break;
                         case "8":
+                            _taskService.SortByStatus();
                             _taskService.SortByStatus();
                             return;
                         default:
