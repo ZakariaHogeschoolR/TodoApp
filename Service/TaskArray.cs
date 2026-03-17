@@ -248,7 +248,11 @@ public class TaskArray<T>: IMyCollection<T>, ITaskArray<T> where T : TaskItem
         if(maxDescription == null)
         {
             return 10;
-        }else
+        }else if(maxDescription.Description.Length <= 10)
+        {
+            return 10;
+        }
+        else
         {
             return maxDescription.Description.Length;
         }

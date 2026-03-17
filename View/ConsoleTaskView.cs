@@ -24,7 +24,7 @@ public class ConsoleTaskView: ITaskView
         {
             _taskService.SortByStatus();
         }
-        int maxDescription = ((ITaskArray<TaskItem>)tasks).MaxDescription();
+        int maxDescription = ((ITaskArray<TaskItem>)tasks).MaxDescription() ;
         Console.Clear();
         Console.Write(new string('=', maxDescription + maxDescription - 13));
         Console.Write("      ToDo List      ");
