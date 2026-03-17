@@ -25,3 +25,4 @@ Thumbs.db
 # Optional: for ReSharper
 _ReSharper*/
 *.DotSettings.user
+.json

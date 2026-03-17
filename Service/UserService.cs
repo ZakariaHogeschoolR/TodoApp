@@ -4,6 +4,17 @@ using System.Diagnostics.CodeAnalysis;
 public class UserService: IUserService
 {
     private Users? _currentUser =  null;
+    public Users? CurrentUser
+    {
+        get
+        {
+            return _currentUser;
+        }    
+        set
+        {
+            _currentUser = value;
+        }
+    }
     private static int _idCount = 0;
     public static int IdCount
     {

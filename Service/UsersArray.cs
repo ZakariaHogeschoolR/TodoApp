@@ -8,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 
 public class UsersArray<T>: IMyCollection<T> where T : Users
 {
-    private T[] _tasks;
+    private T[] _users;
     private int _count;
     public int Count
     {
@@ -38,13 +38,13 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
     {
         if (initialTasks != null)
         {
-            _tasks = initialTasks.ToArray();
+            _users = initialTasks.ToArray();
         }
         else
         {
-            _tasks = new T[0];
+            _users = new T[0];
         }
-        _count = _tasks.Length;
+        _count = _users.Length;
         _dirty = true;
     }
 
@@ -54,11 +54,11 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
         T[] array = new T[Count + 1];
         for(int i = 0; i < Count; i++)
         {
-            array[i] = _tasks[i]; // copy existing tasks
+            array[i] = _users[i]; // copy existing tasks
         }
         item.Id = Count + 1;
         array[Count] = item; // place new item at end
-        _tasks = array;
+        _users = array;
         Count += 1; // increment after
         _dirty = true;
     }
@@ -67,9 +67,9 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
     {
         for(int i = 0; i < Count; i++)
         {
-            if(_tasks[i] == item)
+            if(_users[i] == item)
             {
-                _tasks[i] = change;
+                _users[i] = change;
             }
         }
         _dirty = true;
@@ -83,7 +83,7 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
 
         for (int i = 0; i < Count + 1; i++)
         {
-            if (_tasks[i] == Item)
+            if (_users[i] == Item)
             {
                 index = i;
                 break;
@@ -96,10 +96,10 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
         for (int i = 0, j = 0; i < Count; i++)
         {
             if (i == index) continue; // overslaan
-            newArray[j] = _tasks[i];
+            newArray[j] = _users[i];
             j++;
         }
-        _tasks = newArray;
+        _users = newArray;
         _dirty = false;
     }
 
@@ -107,13 +107,13 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
     {
         for(int i = 0; i < Count; i++)
         {
-            if(_tasks[i] == null)
+            if(_users[i] == null)
             {
                 continue;
             }
-            if(comparer(_tasks[i], Key))
+            if(comparer(_users[i], Key))
             {
-                return _tasks[i];
+                return _users[i];
             }
         }
         return null;
@@ -136,13 +136,13 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
         int size = 0;
         for(int i = 0; i < Count; i++)
         {
-            if(_tasks[i] == null)
+            if(_users[i] == null)
             {
                 continue;
             }
-            if(predicate(_tasks[i]))
+            if(predicate(_users[i]))
             {
-                temporaryArray[size] = _tasks[i];
+                temporaryArray[size] = _users[i];
                 size++;
             }
         }
@@ -160,11 +160,11 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
         {
             if(i != Count  - 1)
             {
-                if(comparison(_tasks[i], _tasks[i + 1]) > 0)
+                if(comparison(_users[i], _users[i + 1]) > 0)
                 {
-                    T oldOne = _tasks[i];
-                    _tasks[i] = _tasks[i + 1];
-                    _tasks[i + 1] = oldOne;    
+                    T oldOne = _users[i];
+                    _users[i] = _users[i + 1];
+                    _users[i + 1] = oldOne;    
                 }
             }
         }
@@ -177,10 +177,10 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
         {
             throw new InvalidOperationException("Cabbit reduce empty collection without initial value.");
         }
-        R result = (R)(object)_tasks[0];
+        R result = (R)(object)_users[0];
         for(int i = 1; i < Count + 1; i++)
         {
-            result = accumulator(result, _tasks[i]);
+            result = accumulator(result, _users[i]);
         }
         return result;
     }
@@ -191,7 +191,7 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
 
         for (int i = 0; i < Count + 1; i++)
         {
-            result = accumulator(result, _tasks[i]);
+            result = accumulator(result, _users[i]);
         }
 
         return result;
@@ -199,14 +199,14 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
 
     public IMyIterator<T> GetIterator()
     {
-       return new TaskArrayIterator<T>(_tasks);
+       return new TaskArrayIterator<T>(_users);
     }
 
     public IEnumerator<T> GetEnumerator()
     {
-        for(int i = 0; i< _tasks.Length; i++)
+        for(int i = 0; i< _users.Length; i++)
         {
-            yield return _tasks[i];
+            yield return _users[i];
         }
     }
 
@@ -220,7 +220,7 @@ public class UsersArray<T>: IMyCollection<T> where T : Users
         T[] copy = new T[Count];
         for (int i = 0; i < Count; i++)
         {
-            copy[i] = _tasks[i];
+            copy[i] = _users[i];
         }
         return copy;
     }
