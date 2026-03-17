@@ -11,5 +11,5 @@ public interface ITaskService
     void ChangeStatus(int id, int status);
     void SortByStatus();
     void List(IMyCollection<TaskItem> collection, statusProgression status);
-    void AddTeamMembers();
+    void AddTeamMembers(TaskItem taskTeam, Users currentUser);
 }

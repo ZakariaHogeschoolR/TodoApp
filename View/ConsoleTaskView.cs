@@ -205,7 +205,11 @@ public class ConsoleTaskView: ITaskView
                             _taskService.SortByStatus();                  
                             break;
                         case "7":
-                            _taskService.AddTeamMembers();
+                            _taskService.SortByStatus();
+                            int id = Convert.ToInt32(Prompt("Enter task id: "));
+                            IMyCollection<TaskItem> task = _taskService.GetAllTasks();
+                            TaskItem taskItem = task.FindBy(id, (task, id) => task.showId == id);
+                            _taskService.AddTeamMembers(taskItem, _userService.CurrentUser);
                             _taskService.SortByStatus();
                             break;
                         case "8":

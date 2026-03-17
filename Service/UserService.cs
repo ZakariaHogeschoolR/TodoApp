@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 public class UserService: IUserService
 {
+    private Users? _currentUser =  null;
     private static int _idCount = 0;
     public static int IdCount
     {
@@ -90,6 +91,7 @@ public class UserService: IUserService
             }
             if(users[i].Name == username && users[i].Password == password )
             {
+                _currentUser = users[i];
                 return true;
             }
         }

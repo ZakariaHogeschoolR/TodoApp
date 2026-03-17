@@ -41,7 +41,7 @@ public class TaskService: ITaskService
             Completed = false,
             Status = statusProgression.ToDo,
             Priority = priority,
-            TeamMembersArray = new TeamMembers[0],
+            TeamMembersArray = new Users[0],
             CreatedAt = DateTime.Now
         };
         var taskArray = (TaskArray<TaskItem>)_tasks;
@@ -150,8 +150,41 @@ public class TaskService: ITaskService
         }
     }
 
-    public void AddTeamMembers()
+    public void AddTeamMembers(TaskItem taskTeam, Users currentUser)
     {
-        return;
+        bool duplicate = false;
+        TaskItem item = _tasks.FindBy<TaskItem>(taskTeam, (task, taskTeam) => task.showId == taskTeam.showId);
+        if(item.TeamMembersArray == null || item.TeamMembersArray.Length <= 0 )
+        {
+            Users[] team = new Users[1];
+            team[0] = currentUser;
+            item.TeamMembersArray = team;
+        }
+        else
+        {
+            Users[] team = new Users[item.TeamMembersArray.Length + 1];
+            for(int i = 0; i < team.Length; i++)
+            {
+                if(i >=  item.TeamMembersArray.Length)
+                {
+                    team[i] = currentUser;
+                    break;
+                }
+                if(item.TeamMembersArray[i] == currentUser)
+                {
+                    duplicate = true;
+                    break;
+                }
+                else
+                {
+                    team[i] = item.TeamMembersArray[i];
+                }
+            }
+            if(duplicate == false)
+            {
+                item.TeamMembersArray = team;
+            }
+        }
+        _repository.SaveTasks(_tasks);
     }
 }

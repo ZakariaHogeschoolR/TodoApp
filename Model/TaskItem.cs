@@ -15,7 +15,7 @@ namespace Model
         public bool Completed { get; set; }
         public statusProgression Status { get; set; }
         public int Priority { get; set; }
-        public TeamMembers[] TeamMembersArray { get; set; }
+        public Users[] TeamMembersArray { get; set; }
         public DateTime CreatedAt { get; set; }
 
     }
