@@ -6,6 +6,7 @@ public class Users
     public string RepeatPassword { get; set; }
     private Users _currentUser { get; set; }
     public string role { get; set; }
+    public bool changed { get; set; }
 
     public Users()
     {

@@ -9,9 +9,11 @@ public class Program
         string filePathUser = "users.json";
         ITaskRepository repositoryTask = new JsonTaskRepository(filePathTask);
         IUserRepository repositoryUser = new JsonUserRepository(filePathUser);
+        JsonTaskRowRepository repositoryTaskRow = new JsonTaskRowRepository();
+        JsonUserRowRepository repositoryUserRow = new JsonUserRowRepository();
         IUserService serviceUser = new UserService(repositoryUser);
         ITaskService serviceTasks = new TaskService(repositoryTask);
-        ITaskView view = new ConsoleTaskView(serviceTasks, serviceUser);
+        ITaskView view = new ConsoleTaskView(serviceTasks, serviceUser, repositoryTaskRow, repositoryUserRow);
         view.Run();
     }
 }

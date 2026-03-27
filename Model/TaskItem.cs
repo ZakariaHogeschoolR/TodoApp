@@ -17,6 +17,7 @@ namespace Model
         public int Priority { get; set; }
         public Users[] TeamMembersArray { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool changed { get; set; }
 
     }
 }

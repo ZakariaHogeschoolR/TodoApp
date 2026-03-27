@@ -5,16 +5,23 @@ using System.Threading.Channels;
 using System.Diagnostics.CodeAnalysis;
 using Model;
 using System.Transactions;
+using Microsoft.VisualBasic;
 
 public class ConsoleTaskView: ITaskView
 {
     public static int count = 0;
     private readonly ITaskService _taskService;
     private readonly IUserService _userService;
-    public ConsoleTaskView(ITaskService taskService, IUserService userService)
+    JsonTaskRowRepository taskRepo;
+    JsonUserRowRepository userRepo;
+    private System.Timers.Timer timer;
+    public ConsoleTaskView(ITaskService taskService, IUserService userService, JsonTaskRowRepository taskRow, JsonUserRowRepository userRow)
     {
         _taskService = taskService;
         _userService = userService;
+        taskRepo = taskRow;
+        userRepo = userRow;
+        timer = new System.Timers.Timer(5000);
     }
 
     public void DisplayTasks()
@@ -24,7 +31,7 @@ public class ConsoleTaskView: ITaskView
         {
             _taskService.SortByStatus();
         }
-        int maxDescription = ((ITaskArray<TaskItem>)tasks).MaxDescription() ;
+        int maxDescription = _taskService.MaxDescription();
         Console.Clear();
         Console.Write(new string('=', maxDescription + maxDescription - 13));
         Console.Write("      ToDo List      ");
@@ -111,6 +118,14 @@ public class ConsoleTaskView: ITaskView
 
     public void Run()
     {
+        timer.Elapsed += (s, e) =>
+        {
+            // Get live tasks from service
+            IMyCollection<TaskItem> tasks = _taskService.GetAllTasks();
+            taskRepo.SaveTasks(tasks);
+        };
+        timer.AutoReset = true;
+        timer.Start();
         while(true)
         {
             Console.Clear();

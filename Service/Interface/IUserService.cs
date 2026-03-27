@@ -9,5 +9,4 @@ public interface IUserService
     void UpdateUser(string password, string repeatPassword, int id);
     void RemoveUser(int id);
     bool CheckCredentials(string username, string password);
-
 }
