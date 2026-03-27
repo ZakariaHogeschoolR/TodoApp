@@ -15,16 +15,16 @@ public class UserService: IUserService
             _currentUser = value;
         }
     }
-    private static int _idCount = 0;
-    public static int IdCount
+    private static int _idCountUser = 0;
+    public static int IdCountUser
     {
         get
         {
-            return _idCount;
+            return _idCountUser;
         }
         set
         {
-            _idCount += value;
+            _idCountUser += value;
         }
     }
     private readonly IUserRepository _repository;
@@ -40,7 +40,6 @@ public class UserService: IUserService
     public void AddUser(string userName, string password, string repeatPassword)
     {
         int id = _users.Count ;
-        IdCount = 1;
         Users newUser = new Users
         {
             Id = _users.Count + 1, 
@@ -48,9 +47,26 @@ public class UserService: IUserService
             Password = password,
             RepeatPassword = repeatPassword
         };
-        var userArray = (UsersArray<Users>)_users;
-        userArray.Add(newUser);
-        _repository.SaveTasks(userArray);
+        var userArray = _users.ToArray();
+        if (newUser == null) return;
+        Users[] newArray = new Users[_users.Count + 1];
+        for(int i = 0; i < _users.Count; i++)
+        {
+            newArray[i] = userArray[i];
+        }
+        newUser.Id = _users.Count + 1;
+        for(int i = 0; i < _users.Count; i++)
+        {
+            if(userArray[i] == newUser)
+            {
+                return;
+            }
+        }
+        newArray[_users.Count] = newUser; // place new item at end
+        _users.Count += 1; // increment after
+        _users.Dirty = true;
+        _users.Add(newArray);
+        _repository.SaveTasks(_users);
     }
 
     public void UpdateUser(string password, string repeatPassword, int id)
@@ -63,7 +79,16 @@ public class UserService: IUserService
             Password = password,
             RepeatPassword = repeatPassword
         };
-        _users.Update(newUser, user);
+        var userArray = _users.ToArray();
+        for(int i = 0; i < _users.Count; i++)
+        {
+            if(userArray[i] == user)
+            {
+                userArray[i] = newUser;
+            }
+        }
+        _users.Dirty = true;
+        _users.Update(userArray);
         _repository.SaveTasks(_users);
     }
 
@@ -77,7 +102,16 @@ public class UserService: IUserService
             Password = user.Password,
             RepeatPassword = user.RepeatPassword
         };
-        _users.Update(newUser, user);
+        var userArray = _users.ToArray();
+        for(int i = 0; i < _users.Count; i++)
+        {
+            if(userArray[i] == user)
+            {
+                userArray[i] = newUser;
+            }
+        }
+        _users.Dirty = true;
+        _users.Update(userArray);
         _repository.SaveTasks(_users);
     }
 
@@ -86,7 +120,29 @@ public class UserService: IUserService
         var user = _users.FindBy(id, (t, id) => t.Id == id);
         if(user != null)
         {
-            _users.Remove(user);
+            int index = -1;
+            var userArray = _users.ToArray();
+            for (int i = 0; i < _users.Count + 1; i++)
+            {
+                if (userArray[i] == user)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if(index == -1) return;
+
+            Users[] newArray = new Users[_users.Count];
+            
+            for (int i = 0, j = 0; i < _users.Count; i++)
+            {
+                if (i == index) continue; // overslaan
+                newArray[j] = userArray[i];
+                j++;
+            }
+            userArray = newArray;
+            _users.Dirty = false;
+            _users.Remove(userArray);
             _repository.SaveTasks(_users);
         }
     }

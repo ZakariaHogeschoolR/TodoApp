@@ -3,21 +3,43 @@ using System.Data.Common;
 using System.Security.Cryptography.X509Certificates;
 using System.Diagnostics.CodeAnalysis;
 using Model;
+using System.Globalization;
+using System.Net;
 
 public class TaskService: ITaskService
 {
-    private static int _idCount = 0;
-    public static int IdCount
+    private static int _idCount = 1;
+    public static int NextId()
     {
-        get
-        {
-            return _idCount;
-        }
-        set
-        {
-            _idCount += value;
-        }
+        return _idCount++;
     }
+
+    public static void ResetId(int num)
+    {
+        _idCount -= num;
+    }
+    // public static int IdPlus
+    // {
+    //     get
+    //     {
+    //         return _idCount;
+    //     }
+    //     set
+    //     {
+    //         _idCount += value;
+    //     }
+    // }
+    // public static int IdMin
+    // {
+    //     get
+    //     {
+    //         return _idCount;
+    //     }
+    //     set
+    //     {
+    //         _idCount += value;
+    //     }
+    // }
     private readonly ITaskRepository _repository;
     private readonly IMyCollection<TaskItem> _tasks;
 
@@ -32,21 +54,33 @@ public class TaskService: ITaskService
     public void AddTask(string description, int priority)
     {
         int id = _tasks.Count + 1;
-        _idCount = _tasks.Count / 3;
-        IdCount = 1;
+        //_idCount = _tasks.Count / 3;
         TaskItem newTask = new TaskItem
         {
             Id = _tasks.Count + 1 % 3, 
-            showId = IdCount,
+            showId = NextId(),
             Description = description, 
             Completed = false,
             Status = statusProgression.ToDo,
             Priority = priority,
             TeamMembersArray = new Users[0],
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.Now,
+            changed = false
         };
-        var taskArray = (TaskArray<TaskItem>)_tasks;
-        taskArray.Add(newTask);
+        var taskArray = (Array<TaskItem>)_tasks;
+        var oldArray = _tasks.ToArray();
+        if (newTask == null) return;
+        TaskItem[] array = new TaskItem[taskArray.Count + 3];
+        for(int i = 0; i < taskArray.Count; i++)
+        {
+            array[i] = oldArray[i]; // copy existing tasks
+        }
+        newTask.Id = taskArray.Count + 1;
+        array[taskArray.Count + 2] = newTask; // place new item at end
+        oldArray = array;
+        _tasks.Count += 3; // increment after
+        _tasks.Dirty = true;
+        _tasks.Add(array);
         _repository.SaveTasks(taskArray);
     }
 
@@ -62,20 +96,81 @@ public class TaskService: ITaskService
             Status = task.Status,
             Priority = task.Priority,
             TeamMembersArray = task.TeamMembersArray,
-            CreatedAt = task.CreatedAt
+            CreatedAt = task.CreatedAt,
+            changed = true
         };
-        _tasks.Update(newTask, task);
+        var array = _tasks.ToArray();
+        for(int i = 0; i < _tasks.Count; i++)
+        {
+            if(array[i] == task)
+            {
+                array[i] = newTask;
+            }
+        }
+        _tasks.Dirty = true;
+        _tasks.Update(array);
         _repository.SaveTasks(_tasks);
     }
 
     public void RemoveTask(int id)
     {
         var task = _tasks.FindBy(id, (t, id) => t.showId == id);
-        if(task != null)
+        if(task == null) return;
+
+        int index = -1;
+        var array = _tasks.ToArray();
+        for (int i = 0; i < _tasks.Count + 1; i++)
         {
-            _tasks.Remove(task);
-            _repository.SaveTasks(_tasks);
+            if (array[i] == task)
+            {
+                index = i;
+                break;
+            }
         }
+
+        if(index == -1) return;
+            int rowStart = (index / 3) * 3;
+
+        int itemsInRow = 0;
+
+        for (int i = rowStart; i < rowStart + 3 && i < _tasks.Count; i++)
+        {
+            if (array[i] != null)
+            {
+                itemsInRow++;
+            }
+        }
+        if (itemsInRow == 1)
+        {
+            TaskItem[] newArray = new TaskItem[_tasks.Count - 3];
+
+            for (int i = 0, j = 0; i < _tasks.Count; i++)
+            {
+                if (i >= rowStart && i < rowStart + 3)
+                    continue;
+
+                newArray[j++] = array[i];
+            }
+
+            array = newArray;
+            _tasks.Count -= 3;
+        }
+        else
+        {
+            // remove only the item
+            array[index] = default;
+        }
+        if (_tasks.Count <= 1)
+        {
+            return;
+        }
+        else
+        {
+            ResetId(1);
+        }
+        _tasks.Dirty = false;
+        _tasks.Remove(array);
+        _repository.SaveTasks(_tasks);
     }
 
     public void ToggleTaskCompletion(int id)
@@ -110,11 +205,22 @@ public class TaskService: ITaskService
 
     public void SortByStatus()
     {
-        
-        if (_tasks is ITaskArray<TaskItem> taskArray)
+        _tasks.Sort((a, b) =>
+            a == null && b == null ? 0 :
+            a == null ? 1 :
+            b == null ? -1 :
+            a.Status.CompareTo(b.Status)
+        );
+        int showId = 1;
+        foreach(var task in _tasks)
         {
-            taskArray.SortByStatus(); // ✅
+            if(task != null)
+            {
+                task.showId = showId++;
+            }
         }
+
+        _tasks.Dirty = false;
     }
     
     public void ChangeStatus(int id, int status)
@@ -160,6 +266,7 @@ public class TaskService: ITaskService
             Users[] team = new Users[1];
             team[0] = currentUser;
             item.TeamMembersArray = team;
+            item.changed = true;
         }
         else
         {
@@ -171,7 +278,7 @@ public class TaskService: ITaskService
                     team[i] = currentUser;
                     break;
                 }
-                if(item.TeamMembersArray[i] == currentUser)
+                if(item.TeamMembersArray[i].Name == currentUser.Name && item.TeamMembersArray[i].Password == currentUser.Password)
                 {
                     duplicate = true;
                     break;
@@ -184,8 +291,41 @@ public class TaskService: ITaskService
             if(duplicate == false)
             {
                 item.TeamMembersArray = team;
+                item.changed = true;
             }
         }
         _repository.SaveTasks(_tasks);
+    }
+
+    public int MaxDescription()
+    {
+        TaskItem? maxDescription = null;
+        var array = _tasks.ToArray();
+        for(int i = 0; i < _tasks.Count; i++)
+        {
+            if(array[i] == null)
+            {
+                continue;
+            }
+            if(maxDescription == null)
+            {
+                maxDescription = array[i];
+            }
+            if(maxDescription.Description.Length < array[i].Description.Length)
+            {
+                maxDescription = array[i];
+            }
+        }
+        if(maxDescription == null)
+        {
+            return 10;
+        }else if(maxDescription.Description.Length <= 10)
+        {
+            return 10;
+        }
+        else
+        {
+            return maxDescription.Description.Length;
+        }
     }
 }

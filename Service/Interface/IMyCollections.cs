@@ -2,11 +2,11 @@ using System.Diagnostics.Contracts;
 using Model;
 public interface IMyCollection<T>
 {
-    int Count { get; }
+    int Count { get; set; }
     bool Dirty { get; set; }
-    void Add(T item);
-    void Update(T Change, T Item);
-    void Remove(T item);
+    void Add(T[] array);
+    void Update(T[] array);
+    void Remove(T[] array);
     T FindBy<K>(K key, Func<T, K, bool> comparer);
     IMyCollection<T> Filter(Func<T, bool> predicate);
     void Sort(Comparison<T> comparison);

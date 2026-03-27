@@ -12,4 +12,5 @@ public interface ITaskService
     void SortByStatus();
     void List(IMyCollection<TaskItem> collection, statusProgression status);
     void AddTeamMembers(TaskItem taskTeam, Users currentUser);
+    int MaxDescription();
 }
