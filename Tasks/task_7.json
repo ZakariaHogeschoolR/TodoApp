@@ -1,0 +1,20 @@
+{
+  "Id": 7,
+  "showId": 1,
+  "Description": "Task",
+  "Completed": false,
+  "Status": 1,
+  "Priority": 3,
+  "TeamMembersArray": [
+    {
+      "Id": 1,
+      "Name": "user",
+      "Password": "password",
+      "RepeatPassword": "password",
+      "role": null,
+      "changed": false
+    }
+  ],
+  "CreatedAt": "2026-03-28T09:57:22.5415291+01:00",
+  "changed": true
+}

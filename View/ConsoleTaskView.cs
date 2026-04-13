@@ -33,6 +33,7 @@ public class ConsoleTaskView: ITaskView
         }
         int maxDescription = _taskService.MaxDescription();
         Console.Clear();
+        Console.WriteLine($"[ Systeem Modus: {AppSettings.Mode} ]");
         Console.Write(new string('=', maxDescription + maxDescription - 13));
         Console.Write("      ToDo List      ");
         Console.Write(new string('=', maxDescription + maxDescription - 12));
@@ -45,8 +46,30 @@ public class ConsoleTaskView: ITaskView
         Console.WriteLine($"|{"".PadRight(maxDescription / 2 + 1)}ToDo{"".PadRight(maxDescription / 2 - 1)}|{"".PadRight(maxDescription / 2 + 1)}InProgress{"".PadRight(maxDescription / 2 - 1)}|{"".PadRight(maxDescription / 2 + 1)}Done{"".PadRight(maxDescription / 2 - 1)}|");
 
         int index = 0;
+        TaskItem[] todo       = new TaskItem[tasks.Count];
+        TaskItem[] inProgress = new TaskItem[tasks.Count];
+        TaskItem[] done       = new TaskItem[tasks.Count];
+        int todoCount = 0, inProgressCount = 0, doneCount = 0;
 
         foreach (TaskItem task in tasks)
+        {
+            if (task == null) continue;
+            if      (task.Status == statusProgression.ToDo)       todo[todoCount++]             = task;
+            else if (task.Status == statusProgression.InProgress) inProgress[inProgressCount++] = task;
+            else if (task.Status == statusProgression.Done)       done[doneCount++]             = task;
+        }
+
+        int rowCount = Math.Max(todoCount, Math.Max(inProgressCount, doneCount));
+        if (rowCount == 0) rowCount = 1;
+
+        TaskItem[] ordered = new TaskItem[rowCount * 3];
+        for (int i = 0; i < rowCount; i++)
+        {
+            ordered[i * 3]     = i < todoCount       ? todo[i]       : null;
+            ordered[i * 3 + 1] = i < inProgressCount ? inProgress[i] : null;
+            ordered[i * 3 + 2] = i < doneCount       ? done[i]       : null;
+        }
+        foreach (TaskItem task in ordered)
         {
             bool isNull = task == null;
             string cell = task != null ? task.Description : "";
@@ -59,33 +82,33 @@ public class ConsoleTaskView: ITaskView
             {
                 if(isNull)
                 {
-                    Console.Write($"|   {cell.PadRight(maxDescription)}");
+                    Console.Write($"|   {cell.PadRight(maxDescription + 1)}");
                 }
                 else
                 {
-                    Console.Write($"|{showId}. {cell.PadRight(maxDescription)}");
+                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 1)}");
                 }
             }
             else if (index % 3 == 1)
             {
                 if(isNull)
                 {
-                    Console.Write($"|   {cell.PadRight(maxDescription + 6)}");
+                    Console.Write($"|   {cell.PadRight(maxDescription + 7)}");
                 }
                 else
                 {
-                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 6)}");
+                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 7)}");
                 }
             }
             else if (index % 3 == 2)
             {
                 if(isNull)
                 {
-                    Console.Write($"|   {cell.PadRight(maxDescription)}|");
+                    Console.Write($"|   {cell.PadRight(maxDescription + 1)}|");
                 }
                 else
                 {
-                    Console.Write($"|{showId}. {cell.PadRight(maxDescription)}|");
+                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 1)}|");
                 }
             }
             index++;
@@ -147,8 +170,11 @@ public class ConsoleTaskView: ITaskView
                     Console.WriteLine("4. Toggle Task State");
                     Console.WriteLine("5. Set status");
                     Console.WriteLine("6. Filter status");
-                    Console.WriteLine("7. Add Yourself to task");
-                    Console.WriteLine("8. Exit");
+                    Console.WriteLine("7. Assign to an task");
+                    Console.WriteLine("8. See participants of an task");
+                    Console.WriteLine("9. Log out");
+                    Console.WriteLine("10. swap DataStructure");
+                    Console.WriteLine("11. Exit");
 
                     string option = Prompt("Select an option: ");
                     switch (option)
@@ -162,7 +188,7 @@ public class ConsoleTaskView: ITaskView
                             break;
                         case "2":
                             _taskService.SortByStatus();
-                            int updateInt = Convert.ToInt32(Prompt("Enter task id to Uodate: "));
+                            int updateInt = Convert.ToInt32(Prompt("Enter task id to Update: "));
                             string updateDescription = Prompt("Enter new description: ");
                             _taskService.UpdateTask(updateDescription, updateInt);
                             _taskService.SortByStatus();
@@ -234,6 +260,61 @@ public class ConsoleTaskView: ITaskView
                             _taskService.SortByStatus();
                             break;
                         case "8":
+                            _taskService.SortByStatus();
+                            int taskId = Convert.ToInt32(Prompt("Enter TaskId: "));
+                            _taskService.SeeParticipants(taskId);
+                            Console.ReadKey();
+                            _taskService.SortByStatus();  
+                            break;
+                        case "9":
+                            string choice = Prompt("Do you want to log back in with an different Account? "); 
+                            if(choice == "y" || choice == "y" || choice =="yes" || choice == "ye")
+                            {
+                                Console.Clear();
+                                Console.WriteLine("");
+                                Console.WriteLine("");
+                                Console.WriteLine("Please Log In");
+                                Console.WriteLine("-----------------");
+                                username = Prompt("Please enter your Username: ");
+                                password = Prompt("Please enter your Password: ");
+                                if(_userService.CheckCredentials(username, password))
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    Console.Clear();
+                                    Console.WriteLine("");
+                                    Console.WriteLine("");
+                                    Console.WriteLine("Please register an account");
+                                    string Username = Prompt("Enter your Username: ");
+                                    string Password = Prompt("Enter your Password: ");
+                                    string RepeatPassword = Prompt("Enter your Password agian: ");
+                                    _userService.AddUser(Username, Password, RepeatPassword);   
+                                }
+                            }
+                            break;
+                        case "10":
+                            Console.Clear();
+                            Console.WriteLine("=== SYSTEEM MIGRATIE ===");
+                            Console.WriteLine("Beschikbare modi: ARRAY, LINKEDLIST, HASHMAP");
+                            string setting = Prompt("Typ de gewenste modus: ").ToUpper(); // ToUpper voorkomt kleine letter foutjes
+
+                            if (setting == "ARRAY" || setting == "LINKEDLIST" || setting == "HASHMAP")
+                            {
+                                AppSettings.Mode = setting;
+                                AppSettings.Save();
+                                Console.WriteLine($"Modus succesvol aangepast naar: {AppSettings.Mode}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Ongeldige keuze. Er is niets veranderd.");
+                            }
+                            Console.WriteLine("Druk op een toets om af te sluiten...");
+                            Console.ReadKey();
+                            Environment.Exit(0);
+                            break;
+                        case "11":
                             _taskService.SortByStatus();
                             _taskService.SortByStatus();
                             return;

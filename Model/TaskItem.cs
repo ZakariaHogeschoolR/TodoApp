@@ -7,7 +7,7 @@ namespace Model
         InProgress = 2,
         Done = 3
     }
-    public class TaskItem
+    public class TaskItem : IHasId<int>
     {
         public int Id { get; set; }
         public int showId { get; set; }

@@ -18,28 +18,7 @@ public class TaskService: ITaskService
     {
         _idCount -= num;
     }
-    // public static int IdPlus
-    // {
-    //     get
-    //     {
-    //         return _idCount;
-    //     }
-    //     set
-    //     {
-    //         _idCount += value;
-    //     }
-    // }
-    // public static int IdMin
-    // {
-    //     get
-    //     {
-    //         return _idCount;
-    //     }
-    //     set
-    //     {
-    //         _idCount += value;
-    //     }
-    // }
+    
     private readonly ITaskRepository _repository;
     private readonly IMyCollection<TaskItem> _tasks;
 
@@ -67,21 +46,8 @@ public class TaskService: ITaskService
             CreatedAt = DateTime.Now,
             changed = false
         };
-        var taskArray = (Array<TaskItem>)_tasks;
-        var oldArray = _tasks.ToArray();
-        if (newTask == null) return;
-        TaskItem[] array = new TaskItem[taskArray.Count + 3];
-        for(int i = 0; i < taskArray.Count; i++)
-        {
-            array[i] = oldArray[i]; // copy existing tasks
-        }
-        newTask.Id = taskArray.Count + 1;
-        array[taskArray.Count + 2] = newTask; // place new item at end
-        oldArray = array;
-        _tasks.Count += 3; // increment after
-        _tasks.Dirty = true;
-        _tasks.Add(array);
-        _repository.SaveTasks(taskArray);
+        _tasks.Add(newTask);
+        _repository.SaveTasks(_tasks);
     }
 
     public void UpdateTask(string description, int id)
@@ -99,78 +65,26 @@ public class TaskService: ITaskService
             CreatedAt = task.CreatedAt,
             changed = true
         };
-        var array = _tasks.ToArray();
-        for(int i = 0; i < _tasks.Count; i++)
-        {
-            if(array[i] == task)
-            {
-                array[i] = newTask;
-            }
-        }
-        _tasks.Dirty = true;
-        _tasks.Update(array);
+        _tasks.Update(task, newTask);
         _repository.SaveTasks(_tasks);
     }
 
     public void RemoveTask(int id)
     {
         var task = _tasks.FindBy(id, (t, id) => t.showId == id);
-        if(task == null) return;
-
-        int index = -1;
-        var array = _tasks.ToArray();
-        for (int i = 0; i < _tasks.Count + 1; i++)
+    
+        if (task != null)
         {
-            if (array[i] == task)
+            _tasks.Remove(task); // De Array<T> regelt nu intern de rowStart en stepSize
+            
+            // Alleen als er nog iets over is, de ID's resetten
+            if (_tasks.Count > 0)
             {
-                index = i;
-                break;
+                ResetId(1);
             }
+            
+            _repository.SaveTasks(_tasks);
         }
-
-        if(index == -1) return;
-            int rowStart = (index / 3) * 3;
-
-        int itemsInRow = 0;
-
-        for (int i = rowStart; i < rowStart + 3 && i < _tasks.Count; i++)
-        {
-            if (array[i] != null)
-            {
-                itemsInRow++;
-            }
-        }
-        if (itemsInRow == 1)
-        {
-            TaskItem[] newArray = new TaskItem[_tasks.Count - 3];
-
-            for (int i = 0, j = 0; i < _tasks.Count; i++)
-            {
-                if (i >= rowStart && i < rowStart + 3)
-                    continue;
-
-                newArray[j++] = array[i];
-            }
-
-            array = newArray;
-            _tasks.Count -= 3;
-        }
-        else
-        {
-            // remove only the item
-            array[index] = default;
-        }
-        if (_tasks.Count <= 1)
-        {
-            return;
-        }
-        else
-        {
-            ResetId(1);
-        }
-        _tasks.Dirty = false;
-        _tasks.Remove(array);
-        _repository.SaveTasks(_tasks);
     }
 
     public void ToggleTaskCompletion(int id)
@@ -326,6 +240,19 @@ public class TaskService: ITaskService
         else
         {
             return maxDescription.Description.Length;
+        }
+    }
+
+    public void SeeParticipants(int taskId)
+    {
+        Console.Clear();
+        Console.WriteLine("=============      ToDo List      =============");
+        Console.WriteLine("|---------------------------------------------|");
+        Console.WriteLine($"|  PARTICIPANTS  |");
+        TaskItem task = _tasks.FindBy(taskId, (t, taskId) => t.showId == taskId);
+        foreach(Users user in task.TeamMembersArray)
+        {
+            Console.WriteLine($"| {user.Id}: {user.Name} |");
         }
     }
 }

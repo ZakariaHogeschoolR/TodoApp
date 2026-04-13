@@ -21,8 +21,9 @@ public class Array<T>: IMyCollection<T>
     //     }
     // }
 
-    private T[] _tasks;
+    private T[] _array;
     private int _count;
+    private readonly int _stepSize;
     public int Count
     {
         get
@@ -47,112 +48,118 @@ public class Array<T>: IMyCollection<T>
         }
     }
 
-    public Array(T[] initialTasks = null)
+    public Array(int stepSize = 1, T[] initialArray = null)
     {
-        if (initialTasks != null)
+        _stepSize = stepSize;
+        if (initialArray != null)
         {
-            _tasks = initialTasks.ToArray();
+            _array = initialArray.ToArray();
         }
         else
         {
-            _tasks = new T[0];
+            _array = new T[0];
         }
-        _count = _tasks.Length;
+        _count = _array.Length;
         _dirty = true;
     }
 
-    void IMyCollection<T>.Add(T[] array)
+    void IMyCollection<T>.Add(T newTask)
     {
-        _tasks = array;   
-        // if (item == null) return;
-        // T[] array = new T[Count + 3];
-        // for(int i = 0; i < Count; i++)
-        // {
-        //     array[i] = _tasks[i]; // copy existing tasks
-        // }
-        // item.Id = Count + 1;
-        // array[Count + 2] = item; // place new item at end
-        // _tasks = array;
-        // Count += 3; // increment after
-        // _dirty = true;
+        if (newTask == null) return;
+
+        T[] newArray = new T[_count + _stepSize];
+
+        for (int i = 0; i < _count; i++)
+        {
+            newArray[i] = _array[i];
+        }
+
+        newArray[_count] = newTask;
+
+        _array = newArray;
+        _count += _stepSize;
+        _dirty = true;
     }
 
 
-    void IMyCollection<T>.Update(T[] array)
+    void IMyCollection<T>.Update(T item, T newItem)
     {
-        _tasks = array;
-        // for(int i = 0; i < Count; i++)
-        // {
-        //     if(_tasks[i] == item)
-        //     {
-        //         _tasks[i] = change;
-        //     }
-        // }
-        // _dirty = true;
+        for (int i = 0; i < _array.Length; i++)
+        {
+            if (_array[i] != null && _array[i].Equals(item))
+            {
+                _array[i] = newItem;
+                _dirty = true;
+                break; 
+            }
+        }
     }
 
-    void IMyCollection<T>.Remove(T[] array)
+    void IMyCollection<T>.Remove(T item)
     {
-        _tasks = array;
-        // if(Item == null) return;
+        if (item == null) return;
 
-        // int index = -1;
+        // 1. Zoek de index van het item in de interne _array
+        int index = -1;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_array[i] != null && _array[i].Equals(item))
+            {
+                index = i;
+                break;
+            }
+        }
 
-        // for (int i = 0; i < Count + 1; i++)
-        // {
-        //     if (_tasks[i] == Item)
-        //     {
-        //         index = i;
-        //         break;
-        //     }
-        // }
+        if (index == -1) return; // Niet gevonden
 
-        // if(index == -1) return;
-        //     int rowStart = (index / 3) * 3;
+        // 2. Maak de plek leeg
+        _array[index] = default(T);
+        _dirty = true;
 
-        // int itemsInRow = 0;
+        // 3. Check of het hele blok (stepSize) nu leeg is
+        int rowStart = (index / _stepSize) * _stepSize;
+        bool rowIsEmpty = true;
+        
+        for (int i = rowStart; i < rowStart + _stepSize && i < _array.Length; i++)
+        {
+            if (_array[i] != null)
+            {
+                rowIsEmpty = false;
+                break;
+            }
+        }
 
-        // for (int i = rowStart; i < rowStart + 3 && i < Count; i++)
-        // {
-        //     if (_tasks[i] != null)
-        //     {
-        //         itemsInRow++;
-        //     }
-        // }
-        // if (itemsInRow == 1)
-        // {
-        //     T[] newArray = new T[Count - 3];
-
-        //     for (int i = 0, j = 0; i < Count; i++)
-        //     {
-        //         if (i >= rowStart && i < rowStart + 3)
-        //             continue;
-
-        //         newArray[j++] = _tasks[i];
-        //     }
-
-        //     _tasks = newArray;
-        //     Count -= 3;
-        // }
-        // else
-        // {
-        //     // remove only the item
-        //     _tasks[index] = default;
-        // }
-        // _dirty = false;
+        // 4. Als het blok leeg is, krimp de array met _stepSize
+        if (rowIsEmpty)
+        {
+            T[] newArray = new T[_array.Length - _stepSize];
+            for (int i = 0, j = 0; i < _array.Length; i++)
+            {
+                // Sla het hele lege blok over
+                if (i >= rowStart && i < rowStart + _stepSize) continue;
+                
+                if (j < newArray.Length)
+                {
+                    newArray[j] = _array[i];
+                    j++;
+                }
+            }
+            _array = newArray;
+            _count = _array.Length; // Update de count naar de nieuwe werkelijkheid
+        }
     }
 
-    T? IMyCollection<T>.FindBy<K>(K Key, Func<T, K, bool> comparer)
+    T? IMyCollection<T>.FindBy<TK>(TK Key, Func<T, TK, bool> comparer)
     {
         for(int i = 0; i < Count; i++)
         {
-            if(_tasks[i] == null)
+            if(_array[i] == null)
             {
                 continue;
             }
-            if(comparer(_tasks[i], Key))
+            if(comparer(_array[i], Key))
             {
-                return _tasks[i];
+                return _array[i];
             }
         }
         return default(T);
@@ -164,13 +171,13 @@ public class Array<T>: IMyCollection<T>
         int size = 0;
         for(int i = 0; i < Count; i++)
         {
-            if(_tasks[i] == null)
+            if(_array[i] == null)
             {
                 continue;
             }
-            if(predicate(_tasks[i]))
+            if(predicate(_array[i]))
             {
-                temporaryArray[size] = _tasks[i];
+                temporaryArray[size] = _array[i];
                 size++;
             }
         }
@@ -179,7 +186,7 @@ public class Array<T>: IMyCollection<T>
         {
             TaskItemArray[j] = temporaryArray[j];
         }
-        return new Array<T>(TaskItemArray);
+        return new Array<T>(_stepSize, TaskItemArray);
     }
 
     void IMyCollection<T>.Sort(Comparison<T> comparison)
@@ -191,11 +198,11 @@ public class Array<T>: IMyCollection<T>
         {
             for (int j = 0; j < Count - i - 1; j++)
             {
-                if (comparison(_tasks[j], _tasks[j + 1]) > 0)
+                if (comparison(_array[j], _array[j + 1]) > 0)
                 {
-                    T temp = _tasks[j];
-                    _tasks[j] = _tasks[j + 1];
-                    _tasks[j + 1] = temp;
+                    T temp = _array[j];
+                    _array[j] = _array[j + 1];
+                    _array[j + 1] = temp;
                 }
             }
         }
@@ -213,120 +220,16 @@ public class Array<T>: IMyCollection<T>
         }
     }
 
-    // public TaskResult FindByStatus( statusProgression status, bool[] used, int startIndex = 0)
-    // {
-    //     for (int i = startIndex; i < Count + 1; i++)
-    //     {
-    //         if(_tasks[i] == null)
-    //         {
-    //             continue;
-    //         }
-    //         else
-    //         {
-    //             if (!used[i] && _tasks[i].Status == status)
-    //             {
-    //                 return new TaskResult(i, _tasks[i]);
-    //             }
-    //         }
-    //     }
-
-    //     return new TaskResult(-1, null);
-    // }
-
-    // public int MaxDescription()
-    // {
-    //     T? maxDescription = null;
-    //     for(int i = 0; i < Count; i++)
-    //     {
-    //         if(_tasks[i] == null)
-    //         {
-    //             continue;
-    //         }
-    //         if(maxDescription == null)
-    //         {
-    //             maxDescription = _tasks[i];
-    //         }
-    //         if(maxDescription.Description.Length < _tasks[i].Description.Length)
-    //         {
-    //             maxDescription = _tasks[i];
-    //         }
-    //     }
-    //     if(maxDescription == null)
-    //     {
-    //         return 10;
-    //     }else if(maxDescription.Description.Length <= 10)
-    //     {
-    //         return 10;
-    //     }
-    //     else
-    //     {
-    //         return maxDescription.Description.Length;
-    //     }
-    // }
-
-
-    // public void SortByStatus()
-    // {
-    //     if (Count <= 0) return;
-
-    //     T[] sorted = new T[Count];
-
-    //     int todoIndex = 0;
-    //     int inProgressIndex = 1;
-    //     int doneIndex = 2;
-
-    //     for (int i = 0; i < Count; i++)
-    //     {
-    //         T task = _tasks[i];
-    //         if(task == null)
-    //         {
-    //             continue;
-    //         }
-    //         switch (task.Status)
-    //         {
-    //             case statusProgression.ToDo:
-    //                 if (todoIndex < Count)
-    //                 {
-    //                     task.Id = todoIndex;
-    //                     sorted[todoIndex] = task;
-    //                     todoIndex += 3;
-    //                 }
-    //                 break;
-
-    //             case statusProgression.InProgress:
-    //                 if (inProgressIndex < Count)
-    //                 {
-    //                     task.Id  = inProgressIndex;
-    //                     sorted[inProgressIndex] = task;
-    //                     inProgressIndex += 3;
-    //                 }
-    //                 break;
-
-    //             case statusProgression.Done:
-    //                 if (doneIndex < Count)
-    //                 {
-    //                     task.Id = doneIndex;
-    //                     sorted[doneIndex] = task;
-    //                     doneIndex += 3;
-    //                 }
-    //                 break;
-    //         }
-    //     }
-    //     Count = sorted.Length;
-    //     _tasks = sorted;
-    //     Dirty = false;
-    // }
-
     R IMyCollection<T>.Reduce<R>(Func<R, T, R> accumulator)
     {
         if(Count + 1 == 0 )
         {
             throw new InvalidOperationException("Cabbit reduce empty collection without initial value.");
         }
-        R result = (R)(object)_tasks[0];
+        R result = (R)(object)_array[0];
         for(int i = 1; i < Count + 1; i++)
         {
-            result = accumulator(result, _tasks[i]);
+            result = accumulator(result, _array[i]);
         }
         return result;
     }
@@ -337,7 +240,7 @@ public class Array<T>: IMyCollection<T>
 
         for (int i = 0; i < Count + 1; i++)
         {
-            result = accumulator(result, _tasks[i]);
+            result = accumulator(result, _array[i]);
         }
 
         return result;
@@ -345,14 +248,14 @@ public class Array<T>: IMyCollection<T>
 
     public IMyIterator<T> GetIterator()
     {
-       return new TaskArrayIterator<T>(_tasks);
+       return new TaskArrayIterator<T>(_array);
     }
 
     public IEnumerator<T> GetEnumerator()
     {
-        for(int i = 0; i< _tasks.Length; i++)
+        for(int i = 0; i< _array.Length; i++)
         {
-            yield return _tasks[i];
+            yield return _array[i];
         }
     }
 
@@ -366,7 +269,7 @@ public class Array<T>: IMyCollection<T>
         T[] copy = new T[Count];
         for (int i = 0; i < Count; i++)
         {
-            copy[i] = _tasks[i];
+            copy[i] = _array[i];
         }
         return copy;
     }
