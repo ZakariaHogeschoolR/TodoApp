@@ -4,10 +4,10 @@ public interface IMyCollection<T>
 {
     int Count { get; set; }
     bool Dirty { get; set; }
-    void Add(T[] array);
-    void Update(T[] array);
-    void Remove(T[] array);
-    T FindBy<K>(K key, Func<T, K, bool> comparer);
+    void Add(T newItem);
+    void Update(T item, T newItem);
+    void Remove(T item);
+    T? FindBy<TK>(TK key, Func<T, TK, bool> comparer);
     IMyCollection<T> Filter(Func<T, bool> predicate);
     void Sort(Comparison<T> comparison);
     R Reduce<R>(Func<R, T, R> accumulator);
