@@ -16,7 +16,8 @@ public class Program
             repositoryTask = new JsonTaskLinkedListRepository(filePathTask);
             repositoryUser = new JsonUserLinkedListRepository(filePathUser);
         }
-        else if{
+        else if(AppSettings.Mode == "HASHMAP")
+        {
             repositoryTask = new JsonTaskHashMapRepository(filePathTask);
             repositoryUser = new JsonUserHashMapRepository(filePathUser);
         } 
