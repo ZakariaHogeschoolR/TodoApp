@@ -8,22 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 
 public class Array<T>: IMyCollection<T>
 {
-    // private class Node
-    // {
-    //     private T _data;
-    //     public Node? next;
-    //     public Node? prev;
-    //     public Node(T data)
-    //     {
-    //         _data = data;
-    //         next = null;
-    //         prev = null;
-    //     }
-    // }
-
     private T[] _array;
     private int _count;
-    private readonly int _stepSize;
     public int Count
     {
         get
@@ -48,9 +34,8 @@ public class Array<T>: IMyCollection<T>
         }
     }
 
-    public Array(int stepSize = 1, T[] initialArray = null)
+    public Array(T[] initialArray = null)
     {
-        _stepSize = stepSize;
         if (initialArray != null)
         {
             _array = initialArray.ToArray();
@@ -67,17 +52,20 @@ public class Array<T>: IMyCollection<T>
     {
         if (newTask == null) return;
 
-        T[] newArray = new T[_count + _stepSize];
+        T[] newArray = new T[_count + 1];
 
         for (int i = 0; i < _count; i++)
         {
-            newArray[i] = _array[i];
+            if(_array[i] != null)
+            {
+                newArray[i] = _array[i];
+            }
         }
 
-        newArray[_count] = newTask;
+        newArray[_count - 1] = newTask;
 
         _array = newArray;
-        _count += _stepSize;
+        _count += 1;
         _dirty = true;
     }
 
@@ -116,11 +104,10 @@ public class Array<T>: IMyCollection<T>
         _array[index] = default(T);
         _dirty = true;
 
-        // 3. Check of het hele blok (stepSize) nu leeg is
-        int rowStart = (index / _stepSize) * _stepSize;
+        int rowStart = (index / 1);
         bool rowIsEmpty = true;
         
-        for (int i = rowStart; i < rowStart + _stepSize && i < _array.Length; i++)
+        for (int i = rowStart; i < rowStart + 1 && i < _array.Length; i++)
         {
             if (_array[i] != null)
             {
@@ -129,14 +116,13 @@ public class Array<T>: IMyCollection<T>
             }
         }
 
-        // 4. Als het blok leeg is, krimp de array met _stepSize
         if (rowIsEmpty)
         {
-            T[] newArray = new T[_array.Length - _stepSize];
+            T[] newArray = new T[_array.Length];
             for (int i = 0, j = 0; i < _array.Length; i++)
             {
                 // Sla het hele lege blok over
-                if (i >= rowStart && i < rowStart + _stepSize) continue;
+                if (i >= rowStart && i < rowStart) continue;
                 
                 if (j < newArray.Length)
                 {
@@ -145,7 +131,7 @@ public class Array<T>: IMyCollection<T>
                 }
             }
             _array = newArray;
-            _count = _array.Length; // Update de count naar de nieuwe werkelijkheid
+            _count--; // Update de count naar de nieuwe werkelijkheid
         }
     }
 
@@ -186,7 +172,7 @@ public class Array<T>: IMyCollection<T>
         {
             TaskItemArray[j] = temporaryArray[j];
         }
-        return new Array<T>(_stepSize, TaskItemArray);
+        return new Array<T>(TaskItemArray);
     }
 
     void IMyCollection<T>.Sort(Comparison<T> comparison)
@@ -269,7 +255,10 @@ public class Array<T>: IMyCollection<T>
         T[] copy = new T[Count];
         for (int i = 0; i < Count; i++)
         {
-            copy[i] = _array[i];
+            if(_array[i] != null)
+            {
+                copy[i] = _array[i];
+            }
         }
         return copy;
     }

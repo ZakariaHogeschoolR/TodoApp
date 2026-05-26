@@ -2,7 +2,6 @@ namespace Model
 {
     public enum statusProgression
     {
-        None = 0,
         ToDo = 1,
         InProgress = 2,
         Done = 3
@@ -10,7 +9,6 @@ namespace Model
     public class TaskItem : IHasId<int>
     {
         public int Id { get; set; }
-        public int showId { get; set; }
         public required string Description { get; set; }
         public bool Completed { get; set; }
         public statusProgression Status { get; set; }
@@ -18,6 +16,7 @@ namespace Model
         public Users[] TeamMembersArray { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool changed { get; set; }
+        public override string ToString()=> $"{Id}. {Description}: {(Completed?'✓':'✗' )} ";
 
     }
 }

@@ -8,19 +8,23 @@ public class JsonTaskLinkedListRepository : ITaskRepository
 
     public IMyCollection<TaskItem> LoadTasks()
     {
-        // CRUCIAAL: We maken hier jouw specifieke LinkedList aan
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Tasks");
         var linkedList = new LinkedList<TaskItem>();
 
-        if (!File.Exists(_filePath)) return linkedList;
-
-        string json = File.ReadAllText(_filePath);
-        var tasks = JsonSerializer.Deserialize<List<TaskItem>>(json);
-
-        if (tasks != null)
+        if (!Directory.Exists(folder))
         {
-            foreach (var task in tasks)
+            return linkedList;
+        }
+        string[] files = Directory.GetFiles(folder, "*.json");
+
+        for (int i = 0; i < files.Length; i++)
+        {
+            string json = File.ReadAllText(files[i]);
+
+            TaskItem? task = JsonSerializer.Deserialize<TaskItem>(json);
+
+            if (task != null)
             {
-                // De .Add() methode van je LinkedList maakt intern de Nodes aan
                 linkedList.Add(task);
             }
         }
@@ -29,8 +33,27 @@ public class JsonTaskLinkedListRepository : ITaskRepository
 
     public void SaveTasks(IMyCollection<TaskItem> tasks)
     {
-        // We gebruiken ToArray() of ToList() om de ketting weer plat te slaan voor JSON
-        var json = JsonSerializer.Serialize(tasks.ToArray(), new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Tasks");
+
+        Directory.CreateDirectory(folder);
+
+        var array = tasks.ToArray();
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (array[i] == null)
+                continue;
+
+            string filePath = Path.Combine(folder, $"task_{array[i].Id}.json");
+
+            string json = JsonSerializer.Serialize(
+                array[i],
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+            File.WriteAllText(filePath, json);
+        }
     }
 }
