@@ -11,11 +11,11 @@ public class JsonUserRepository: IUserRepository
     {
         if(!File.Exists(_filePath))
         {
-            return new Array<Users>(1, new Users[0]);
+            return new Array<Users>(new Users[0]);
         }
         string json = File.ReadAllText(_filePath);
         var users = JsonSerializer.Deserialize<Users[]>(json);
-        return new Array<Users>(1, users) ?? new Array<Users>(1,new Users[users.Length]);
+        return new Array<Users>(users) ?? new Array<Users>(new Users[users.Length]);
     }
     public void SaveUsers(IMyCollection<Users> users)
     {

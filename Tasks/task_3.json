@@ -1,0 +1,10 @@
+{
+  "Id": 3,
+  "Description": "Task 1",
+  "Completed": false,
+  "Status": 3,
+  "Priority": 1,
+  "TeamMembersArray": [],
+  "CreatedAt": "2026-05-26T09:30:53.7831228+02:00",
+  "changed": false
+}

@@ -25,14 +25,14 @@ public class Program
             repositoryTask = new JsonTaskRepository(filePathTask);
             repositoryUser = new JsonUserRepository(filePathUser);
         }
-        JsonTaskRowRepository repositoryTaskRow = new JsonTaskRowRepository();
+
         JsonUserRowRepository repositoryUserRow = new JsonUserRowRepository();
 
         IUserService serviceUser = new UserService(repositoryUser);
         ITaskService serviceTasks = new TaskService(repositoryTask);
 
         // Geef de view alles mee
-        ITaskView view = new ConsoleTaskView(serviceTasks, serviceUser, repositoryTaskRow, repositoryUserRow);
+        ITaskView view = new ConsoleTaskView(serviceTasks, serviceUser, repositoryTask, repositoryUserRow);
         view.Run();
     }
 }

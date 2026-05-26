@@ -6,5 +6,13 @@
     "RepeatPassword": "password",
     "role": null,
     "changed": false
+  },
+  {
+    "Id": 2,
+    "Name": "",
+    "Password": "",
+    "RepeatPassword": "",
+    "role": null,
+    "changed": false
   }
 ]

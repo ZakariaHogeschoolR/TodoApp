@@ -12,124 +12,40 @@ public class ConsoleTaskView: ITaskView
     public static int count = 0;
     private readonly ITaskService _taskService;
     private readonly IUserService _userService;
-    JsonTaskRowRepository taskRepo;
+    private readonly ITaskRepository _taskRep;
     JsonUserRowRepository userRepo;
     private System.Timers.Timer timer;
-    public ConsoleTaskView(ITaskService taskService, IUserService userService, JsonTaskRowRepository taskRow, JsonUserRowRepository userRow)
+    public ConsoleTaskView(ITaskService taskService, IUserService userService, ITaskRepository taskRep, JsonUserRowRepository userRow)
     {
         _taskService = taskService;
         _userService = userService;
-        taskRepo = taskRow;
+        _taskRep = taskRep;
         userRepo = userRow;
         timer = new System.Timers.Timer(5000);
     }
-
-    public void DisplayTasks()
+    
+    public void DisplayTasks(IMyCollection<TaskItem> Tasks, statusProgression status)
     {
-        IMyCollection<TaskItem> tasks = _taskService.GetAllTasks();
-        if(tasks.Dirty)
-        {
-            _taskService.SortByStatus();
-        }
-        int maxDescription = _taskService.MaxDescription();
-        Console.Clear();
-        Console.WriteLine($"[ Systeem Modus: {AppSettings.Mode} ]");
-        Console.Write(new string('=', maxDescription + maxDescription - 13));
-        Console.Write("      ToDo List      ");
-        Console.Write(new string('=', maxDescription + maxDescription - 12));
-        Console.WriteLine();
-        Console.Write("|"); 
-        Console.Write(new string('=', maxDescription + maxDescription - 3));
-        Console.Write(new string('=', maxDescription + maxDescription - 3));
-        Console.Write("|");
-        Console.WriteLine();
-        Console.WriteLine($"|{"".PadRight(maxDescription / 2 + 1)}ToDo{"".PadRight(maxDescription / 2 - 1)}|{"".PadRight(maxDescription / 2 + 1)}InProgress{"".PadRight(maxDescription / 2 - 1)}|{"".PadRight(maxDescription / 2 + 1)}Done{"".PadRight(maxDescription / 2 - 1)}|");
+        if (Tasks == null || Tasks.Count == 0) return;
 
-        int index = 0;
-        TaskItem[] todo       = new TaskItem[tasks.Count];
-        TaskItem[] inProgress = new TaskItem[tasks.Count];
-        TaskItem[] done       = new TaskItem[tasks.Count];
-        int todoCount = 0, inProgressCount = 0, doneCount = 0;
+        int max = _taskService.MaxDescription() + 10; // Add space for ID and Status text
+        string statusName = status.ToString().ToUpper();
 
-        foreach (TaskItem task in tasks)
+        Console.ForegroundColor = ConsoleColor.Cyan; // Add a splash of color
+        Console.WriteLine($"╔{new string('═', max)}╗");
+        Console.WriteLine($"║ {statusName.PadRight(max - 1)}║");
+        Console.WriteLine($"╠{new string('═', max)}╣");
+        Console.ResetColor();
+
+        foreach (var task in Tasks)
         {
-            if (task == null) continue;
-            if      (task.Status == statusProgression.ToDo)       todo[todoCount++]             = task;
-            else if (task.Status == statusProgression.InProgress) inProgress[inProgressCount++] = task;
-            else if (task.Status == statusProgression.Done)       done[doneCount++]             = task;
+            if (task != null)
+            {
+                Console.WriteLine($"║ {task.ToString().PadRight(max - 1)}║");
+            }
         }
 
-        int rowCount = Math.Max(todoCount, Math.Max(inProgressCount, doneCount));
-        if (rowCount == 0) rowCount = 1;
-
-        TaskItem[] ordered = new TaskItem[rowCount * 3];
-        for (int i = 0; i < rowCount; i++)
-        {
-            ordered[i * 3]     = i < todoCount       ? todo[i]       : null;
-            ordered[i * 3 + 1] = i < inProgressCount ? inProgress[i] : null;
-            ordered[i * 3 + 2] = i < doneCount       ? done[i]       : null;
-        }
-        foreach (TaskItem task in ordered)
-        {
-            bool isNull = task == null;
-            string cell = task != null ? task.Description : "";
-            int showId = task == null ? 0 : task.showId;
-            if(showId == 0 && task == null)
-            {
-                isNull = true;
-            }
-            if (index % 3 == 0)
-            {
-                if(isNull)
-                {
-                    Console.Write($"|   {cell.PadRight(maxDescription + 1)}");
-                }
-                else
-                {
-                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 1)}");
-                }
-            }
-            else if (index % 3 == 1)
-            {
-                if(isNull)
-                {
-                    Console.Write($"|   {cell.PadRight(maxDescription + 7)}");
-                }
-                else
-                {
-                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 7)}");
-                }
-            }
-            else if (index % 3 == 2)
-            {
-                if(isNull)
-                {
-                    Console.Write($"|   {cell.PadRight(maxDescription + 1)}|");
-                }
-                else
-                {
-                    Console.Write($"|{showId}. {cell.PadRight(maxDescription + 1)}|");
-                }
-            }
-            index++;
-
-            if (index % 3 == 0)
-                Console.WriteLine();
-        }
-
-        if (index % 3 != 0)
-        {
-            // Fill remaining columns in the last incomplete row
-            while (index % 3 != 0)
-            {
-                if (index % 3 == 1)
-                    Console.Write($"|  {"".PadRight(maxDescription)}");
-                else if (index % 3 == 2)
-                    Console.Write($"|  {"".PadRight(maxDescription)}|");
-                index++;
-            }
-            Console.WriteLine();
-        }
+        Console.WriteLine($"╚{new string('═', max)}╝");
     }
 
     
@@ -145,7 +61,7 @@ public class ConsoleTaskView: ITaskView
         {
             // Get live tasks from service
             IMyCollection<TaskItem> tasks = _taskService.GetAllTasks();
-            taskRepo.SaveTasks(tasks);
+            _taskRep.SaveTasks(tasks);
         };
         timer.AutoReset = true;
         timer.Start();
@@ -162,7 +78,11 @@ public class ConsoleTaskView: ITaskView
             {
                 while (true)
                 {
-                    DisplayTasks();
+                    //Console.Clear();
+                    Console.WriteLine($"[ Systeem Modus: {AppSettings.Mode} ]");
+                    DisplayTasks(_taskService.FilterByStatus(statusProgression.ToDo), statusProgression.ToDo);
+                    DisplayTasks(_taskService.FilterByStatus(statusProgression.InProgress), statusProgression.InProgress);
+                    DisplayTasks(_taskService.FilterByStatus(statusProgression.Done), statusProgression.Done);
                     Console.WriteLine("\nOptions:");
                     Console.WriteLine("1. Add Task");
                     Console.WriteLine("2. Update Task");
@@ -213,26 +133,19 @@ public class ConsoleTaskView: ITaskView
                             break;
                         case "5":
                             _taskService.SortByStatus();
-                            int IdStr = Convert.ToInt32(Prompt("Enter task id: "));
+                            int Id = Convert.ToInt32(Prompt("Enter task id: "));
                             Console.WriteLine("1. To Do");
                             Console.WriteLine("2. In Progress");
                             Console.WriteLine("3. Done");
                             int Status = Convert.ToInt32(Prompt("Enter task status id: "));
-                            switch(Status)
+                            if (Status >= 1 && Status <= 3)
                             {
-                                case 1:
-                                    _taskService.ChangeStatus(IdStr, Status);
-                                    break;
-                                case 2:
-                                    _taskService.ChangeStatus(IdStr, Status);
-                                    break;
-                                case 3:
-                                    _taskService.ChangeStatus(IdStr, Status);
-                                    break;
-                                default:
-                                    Console.WriteLine("Invalid option. Press any key to continue...");
-                                    Console.ReadKey();
-                                    break;
+                                _taskService.ChangeStatus(Id, Status);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid option. Press any key to continue...");
+                                Console.ReadKey();
                             }
                             _taskService.SortByStatus();
                             break;
@@ -255,7 +168,7 @@ public class ConsoleTaskView: ITaskView
                             _taskService.SortByStatus();
                             int id = Convert.ToInt32(Prompt("Enter task id: "));
                             IMyCollection<TaskItem> task = _taskService.GetAllTasks();
-                            TaskItem taskItem = task.FindBy(id, (task, id) => task.showId == id);
+                            TaskItem taskItem = task.FindBy(id, (task, id) => task.Id == id);
                             _taskService.AddTeamMembers(taskItem, _userService.CurrentUser);
                             _taskService.SortByStatus();
                             break;
@@ -310,6 +223,7 @@ public class ConsoleTaskView: ITaskView
                             {
                                 Console.WriteLine("Ongeldige keuze. Er is niets veranderd.");
                             }
+                            
                             Console.WriteLine("Druk op een toets om af te sluiten...");
                             Console.ReadKey();
                             Environment.Exit(0);

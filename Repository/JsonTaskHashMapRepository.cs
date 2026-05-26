@@ -9,27 +9,31 @@ public class JsonTaskHashMapRepository : ITaskRepository
 
     public IMyCollection<TaskItem> LoadTasks()
     {
-        // We maken een HashMap met 'int' als Key (het TaskId) en 'TaskItem' als object
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Tasks");
         var taskMap = new HashMap<int, TaskItem>(); 
 
-        if (!File.Exists(_filePath)) return taskMap;
-
-        try 
+        if (!Directory.Exists(folder))
         {
-            string json = File.ReadAllText(_filePath);
-            var tasks = JsonSerializer.Deserialize<List<TaskItem>>(json);
-
-            if (tasks != null)
+            return taskMap;
+        }
+        string[] files = Directory.GetFiles(folder, "*.json");
+        foreach (string file in files)
+        {
+            try
             {
-                foreach (var task in tasks)
+                string json = File.ReadAllText(file);
+
+                TaskItem? task = JsonSerializer.Deserialize<TaskItem>(json);
+
+                if (task != null)
                 {
                     taskMap.Add(task);
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Fout bij laden tasks: {ex.Message}");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fout bij laden van {file}: {ex.Message}");
+            }
         }
 
         return taskMap;
@@ -37,8 +41,27 @@ public class JsonTaskHashMapRepository : ITaskRepository
 
     public void SaveTasks(IMyCollection<TaskItem> tasks)
     {
-        // ToArray() zorgt dat de buckets worden samengevoegd tot één lijst voor JSON
-        var json = JsonSerializer.Serialize(tasks.ToArray(), new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Tasks");
+
+        Directory.CreateDirectory(folder);
+
+        var array = tasks.ToArray();
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (array[i] == null)
+                continue;
+
+            string filePath = Path.Combine(folder, $"task_{array[i].Id}.json");
+
+            string json = JsonSerializer.Serialize(
+                array[i],
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+            File.WriteAllText(filePath, json);
+        }
     }
 }
