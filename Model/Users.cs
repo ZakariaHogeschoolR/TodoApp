@@ -1,4 +1,4 @@
-public class Users : IHasId<int>
+public class Users : IHasId<int>, IComparable<Users>
 {
     public int Id { get; set; }
     public string Name { get; set; }
@@ -11,5 +11,13 @@ public class Users : IHasId<int>
     public Users()
     {
         _currentUser = this;
+    }
+
+    public int CompareTo(Users? other)
+    {
+        if(other == null )
+            return 1;
+
+        return this.Id.CompareTo(other.Id);
     }
 }

@@ -210,10 +210,10 @@ public class ConsoleTaskView: ITaskView
                         case "10":
                             Console.Clear();
                             Console.WriteLine("=== SYSTEEM MIGRATIE ===");
-                            Console.WriteLine("Beschikbare modi: ARRAY, LINKEDLIST, HASHMAP");
+                            Console.WriteLine("Beschikbare modi: ARRAY, LINKEDLIST, HASHMAP, BINEARYSEARCHTREE");
                             string setting = Prompt("Typ de gewenste modus: ").ToUpper(); // ToUpper voorkomt kleine letter foutjes
 
-                            if (setting == "ARRAY" || setting == "LINKEDLIST" || setting == "HASHMAP")
+                            if (setting == "ARRAY" || setting == "LINKEDLIST" || setting == "HASHMAP" || setting == "BINEARYSEARCHTREE")
                             {
                                 AppSettings.Mode = setting;
                                 AppSettings.Save();

@@ -6,7 +6,7 @@ namespace Model
         InProgress = 2,
         Done = 3
     }
-    public class TaskItem : IHasId<int>
+    public class TaskItem : IHasId<int>, IComparable<TaskItem>
     {
         public int Id { get; set; }
         public required string Description { get; set; }
@@ -18,5 +18,12 @@ namespace Model
         public bool changed { get; set; }
         public override string ToString()=> $"{Id}. {Description}: {(Completed?'✓':'✗' )} ";
 
+        public int CompareTo(TaskItem? other)
+        {
+            if(other == null )
+                return 1;
+
+            return this.Priority.CompareTo(other.Priority);
+        }
     }
 }

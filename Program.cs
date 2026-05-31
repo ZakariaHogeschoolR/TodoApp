@@ -21,6 +21,11 @@ public class Program
             repositoryTask = new JsonTaskHashMapRepository(filePathTask);
             repositoryUser = new JsonUserHashMapRepository(filePathUser);
         } 
+        else if(AppSettings.Mode == "BINEARYSEARCHTREE")
+        {
+            repositoryTask = new JsonTaskBinearySearchTreeRepository(filePathTask);
+            repositoryUser = new JsonUserBinearySearchTreeRepository(filePathUser);
+        } 
         else {
             repositoryTask = new JsonTaskRepository(filePathTask);
             repositoryUser = new JsonUserRepository(filePathUser);
